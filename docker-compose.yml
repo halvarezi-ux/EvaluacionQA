@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: evaluacionqa_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: evaluacionqa
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_USER: evaluacionqa_user
+      MYSQL_PASSWORD: evaluacionqa_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - evaluacionqa_network
+
+  # Laravel Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: evaluacionqa_backend
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./backend:/var/www
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
+    networks:
+      - evaluacionqa_network
+    environment:
+      DB_HOST: mysql
+      DB_DATABASE: evaluacionqa
+      DB_USERNAME: evaluacionqa_user
+      DB_PASSWORD: evaluacionqa_pass
+
+  # Angular Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: evaluacionqa_frontend
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "4200:4200"
+    depends_on:
+      - backend
+    networks:
+      - evaluacionqa_network
+
+  # Redis for caching and queues
+  redis:
+    image: redis:7-alpine
+    container_name: evaluacionqa_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - evaluacionqa_network
+
+networks:
+  evaluacionqa_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
