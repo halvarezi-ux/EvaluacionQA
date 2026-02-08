@@ -253,4 +253,4 @@ Para soporte y consultas, contactar al equipo de desarrollo.
 
 ---
 
-**EvaluaciónQA** - Sistema Enterprise de Evaluación de Calidad © 2024
+**EvaluaciónQA** - Sistema Enterprise de Evaluación de Calidad © 2026
