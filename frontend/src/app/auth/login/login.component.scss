@@ -462,7 +462,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .right-panel {
-    padding: 30px 50px;
+    padding: 30px 20px;
   }
 
   .form-header h2 {
@@ -474,8 +474,6 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     font-size: 1rem;
   }
 
-  // Ocultar elementos decorativos en pantallas pequeñas
-  // Prueba final - Git funciona correctamente ✓
   .circle {
     &.circle-2, &.circle-3 {
       display: none;
