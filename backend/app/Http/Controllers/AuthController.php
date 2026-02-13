@@ -9,26 +9,37 @@ use Illuminate\Support\Facades\Hash;
 class AuthController extends Controller
 {
     public function login(Request $request)
-{
-    $request->validate([
-        'user' => 'required|string',
-        'password' => 'required|string',
-    ]);
+    {
+        $request->validate([
+            'user' => 'required|string',
+            'password' => 'required|string',
+        ]);
 
-    $user = User::where('user', $request->user)->first();
+        // Eager loading: carga la relación 'role' en la misma consulta
+        $user = User::where('user', $request->user)
+            ->with('role')  // ← CLAVE: Carga el rol inmediatamente
+            ->first();
 
-    if (!$user || !Hash::check($request->password, $user->password)) {
-        return response()->json(['message' => 'Credenciales inválidas'], 401);
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json(['message' => 'Credenciales inválidas'], 401);
+        }
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        // Transformación manual: solo datos necesarios para el frontend
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role->nombre,  // ← CLAVE: Nombre del rol (string)
+                'active' => $user->active
+            ]
+        ]);
     }
-
-    $token = $user->createToken('auth_token')->plainTextToken;
-
-    return response()->json([
-        'access_token' => $token,
-        'token_type' => 'Bearer',
-        'user' => $user,
-    ]);
-}
+    
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();

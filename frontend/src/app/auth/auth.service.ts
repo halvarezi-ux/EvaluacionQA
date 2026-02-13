@@ -7,11 +7,18 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = `${environment.apiUrl}/login`;
+  private apiUrl = environment.apiUrl;  // ← Cambiar para reutilizar
 
   constructor(private http: HttpClient) { }
 
   login(user: string, password: string): Observable<any> {
-    return this.http.post(this.apiUrl, { user, password });
+    return this.http.post(`${this.apiUrl}/login`, { user, password });
+  }
+
+  /**
+   * Cierra sesión en el backend (invalida el token en la BD)
+   */
+  logout(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/logout`, {});
   }
 }
