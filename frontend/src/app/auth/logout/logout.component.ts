@@ -35,8 +35,13 @@ export class LogoutComponent implements OnInit {
         this.clearSessionAndRedirect();
       },
       error: (err) => {
-        // Aunque el backend falle, limpiar sesión local
-        console.error('Error al cerrar sesión en backend:', err);
+        // Error 401 es normal: token ya invalidado o expirado
+        if (err.status === 401) {
+          console.info('ℹ️ Token ya invalidado o expirado (comportamiento esperado)');
+        } else {
+          console.warn('⚠️ No se pudo notificar logout al backend:', err.message);
+        }
+        // Siempre limpiar sesión local aunque el backend falle
         this.clearSessionAndRedirect();
       }
     });

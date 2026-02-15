@@ -76,7 +76,7 @@
               Contraseña requerida
             </mat-error>
             <mat-error *ngIf="loginForm.get('password')?.hasError('minlength')">
-              Mínimo 6 caracteres
+              Mínimo 6 caracteres (por seguridad)
             </mat-error>
           </mat-form-field>
         </div>
