@@ -1,111 +1,112 @@
-<div class="login-wrapper">
-  <!-- Panel Izquierdo - Branding -->
-  <div class="left-panel">
-    <div class="brand-content">
-      <div class="logo-section">
-        <img src="assets/logo-evaluacionqa.png" alt="EvaluaciónQA" class="brand-logo" />
-      </div>
-      <h1 class="brand-title">Evaluación<span class="highlight-green">QA</span></h1>
-      <p class="brand-description">Sistema Enterprise de Gestión de Calidad</p>
-      <div class="features">
-        <div class="feature-item">
-          <mat-icon class="feature-icon">verified_user</mat-icon>
-          <span>Seguro y Confiable</span>
-        </div>
-        <div class="feature-item">
-          <mat-icon class="feature-icon">analytics</mat-icon>
-          <span>Dashboard en Tiempo Real</span>
-        </div>
-        <div class="feature-item">
-          <mat-icon class="feature-icon">people</mat-icon>
-          <span>Gestión Colaborativa</span>
-        </div>
-      </div>
+<div class="login-container" @pageEnter>
+  <div class="auth-card" [class.error]="error">
+    <!-- Header -->
+    <div class="auth-header">
+      <h1 class="auth-title animate-item">Evaluación<span class="highlight">QA</span></h1>
+      <p class="auth-subtitle animate-item">Plataforma de Control de Calidad</p>
     </div>
-    <div class="decorative-elements">
-      <div class="circle circle-1"></div>
-      <div class="circle circle-2"></div>
-      <div class="circle circle-3"></div>
-    </div>
-  </div>
 
-  <!-- Panel Derecho - Formulario -->
-  <div class="right-panel">
-    <div class="form-container">
-      <div class="form-header">
-        <h2>Iniciar Sesión</h2>
-        <p>Ingresa tus credenciales para acceder al sistema</p>
+    <!-- Form -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <!-- Email/Usuario Input -->
+      <div class="form-group animate-item">
+        <label for="user" class="form-label">Usuario</label>
+        <input 
+          #userInput
+          id="user"
+          type="text"
+          class="form-input"
+          formControlName="user"
+          placeholder="Ingresa tu usuario"
+          autocomplete="username"
+          [class.error]="loginForm.get('user')?.invalid && loginForm.get('user')?.touched"
+          required>
+        <div class="error-message" *ngIf="loginForm.get('user')?.hasError('required') && loginForm.get('user')?.touched">
+          Usuario requerido
+        </div>
+        <div class="error-message" *ngIf="loginForm.get('user')?.hasError('minlength') && loginForm.get('user')?.touched">
+          Mínimo 4 caracteres
+        </div>
       </div>
 
-      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
-        <div class="form-fields">
-          <mat-form-field appearance="outline" class="custom-field">
-            <mat-label>Usuario</mat-label>
-            <input 
-              matInput 
-              formControlName="user" 
-              required 
-              autocomplete="username">
-            <mat-icon matPrefix>account_circle</mat-icon>
-            <mat-error *ngIf="loginForm.get('user')?.hasError('required')">
-              Usuario requerido
-            </mat-error>
-            <mat-error *ngIf="loginForm.get('user')?.hasError('minlength')">
-              Mínimo 4 caracteres
-            </mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="custom-field">
-            <mat-label>Contraseña</mat-label>
-            <input 
-              matInput 
-              [type]="hidePassword ? 'password' : 'text'" 
-              formControlName="password" 
-              required
-              autocomplete="current-password">
-            <mat-icon matPrefix>lock</mat-icon>
-            <button 
-              mat-icon-button 
-              matSuffix 
-              (click)="hidePassword = !hidePassword" 
-              type="button"
-              [attr.aria-label]="'Toggle password visibility'">
-              <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
-            </button>
-            <mat-error *ngIf="loginForm.get('password')?.hasError('required')">
-              Contraseña requerida
-            </mat-error>
-            <mat-error *ngIf="loginForm.get('password')?.hasError('minlength')">
-              Mínimo 6 caracteres (por seguridad)
-            </mat-error>
-          </mat-form-field>
+      <!-- Password Input -->
+      <div class="form-group animate-item">
+        <label for="password" class="form-label">Contraseña</label>
+        <div class="password-wrapper">
+          <input 
+            #passwordInput
+            id="password"
+            [type]="hidePassword ? 'password' : 'text'"
+            class="form-input"
+            formControlName="password"
+            placeholder="Ingresa tu contraseña"
+            autocomplete="current-password"
+            [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+            (keydown)="onPasswordKeydown($event)"
+            required>
+          <button 
+            type="button"
+            class="password-toggle"
+            (click)="hidePassword = !hidePassword"
+            [attr.aria-label]="hidePassword ? 'Mostrar contraseña' : 'Ocultar contraseña'">
+            <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+          </button>
         </div>
-
-        <div class="form-actions">
-          <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+        <div class="error-message" *ngIf="loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched">
+          Contraseña requerida
         </div>
-
-        <div *ngIf="error" class="error-alert">
-          <mat-icon>error_outline</mat-icon>
-          <span>{{ error }}</span>
+        <div class="error-message" *ngIf="loginForm.get('password')?.hasError('minlength') && loginForm.get('password')?.touched">
+          Mínimo 6 caracteres
         </div>
-
-        <button 
-          mat-raised-button 
-          type="submit" 
-          class="submit-button"
-          [disabled]="loading || loginForm.invalid">
-          <span *ngIf="!loading">
-            <mat-icon>login</mat-icon>
-            Ingresar al Sistema
-          </span>
-          <mat-spinner *ngIf="loading" diameter="24"></mat-spinner>
-        </button>
-      </form>
-
-      <div class="footer-info">
-        <p>© 2026 EvaluaciónQA - Todos los derechos reservados</p>
+        <!-- Caps Lock Warning -->
+        <div class="caps-warning" *ngIf="capsLockOn">
+          <mat-icon>keyboard_capslock</mat-icon>
+          <span>Bloq Mayús activado</span>
+        </div>
       </div>
+
+      <!-- Auxiliary Row -->
+      <div class="aux-row animate-item">
+        <label class="remember-me">
+          <input type="checkbox" class="checkbox" formControlName="rememberMe">
+          <span>Recordarme</span>
+        </label>
+        <a href="#" class="forgot-link">¿Olvidaste tu contraseña?</a>
+      </div>
+
+      <!-- Error Alert -->
+      <div 
+        *ngIf="error" 
+        class="error-alert"
+        role="alert" 
+        aria-live="polite" 
+        aria-atomic="true">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error }}</span>
+      </div>
+
+      <!-- Submit Button -->
+      <button 
+        type="submit" 
+        class="submit-btn animate-item"
+        [class.loading]="loading"
+        [class.success]="showSuccess"
+        [disabled]="loading"
+        (click)="onButtonClick($event)">
+        <span class="btn-text" [class.hidden]="loading || showSuccess">Ingresar al Sistema</span>
+        <div *ngIf="loading" class="spinner-wrapper">
+          <div class="spinner"></div>
+        </div>
+        <div *ngIf="showSuccess" class="success-wrapper">
+          <mat-icon class="success-icon">check_circle</mat-icon>
+          <span class="success-text">Acceso concedido</span>
+        </div>
+      </button>
+    </form>
+
+    <!-- Footer -->
+    <div class="auth-footer animate-item">
+      <p>© 2026 EvaluaciónQA - Todos los derechos reservados</p>
     </div>
   </div>
 </div>

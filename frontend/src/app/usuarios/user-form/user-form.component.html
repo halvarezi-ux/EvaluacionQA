@@ -1,0 +1,117 @@
+<div class="user-form-container">
+  <!-- Loading spinner -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner></mat-spinner>
+  </div>
+
+  <mat-card *ngIf="!isLoading">
+    <!-- Header -->
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>{{ isEditMode ? 'edit' : 'person_add' }}</mat-icon>
+        {{ isEditMode ? 'Editar Usuario' : 'Crear Usuario' }}
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
+        
+        <!-- Nombre completo -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nombre Completo</mat-label>
+          <input matInput formControlName="name" placeholder="Ej: Juan Pérez">
+          <mat-icon matPrefix>person</mat-icon>
+          <mat-error *ngIf="userForm.get('name')?.invalid">
+            {{ getErrorMessage('name') }}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Usuario -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Usuario</mat-label>
+          <input matInput formControlName="user" placeholder="Ej: juan.perez">
+          <mat-icon matPrefix>account_circle</mat-icon>
+          <mat-hint>Solo letras minúsculas, números, punto (.) y guión bajo (_)</mat-hint>
+          <mat-error *ngIf="userForm.get('user')?.invalid">
+            {{ getErrorMessage('user') }}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Email -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" placeholder="Ej: juan@ejemplo.com">
+          <mat-icon matPrefix>email</mat-icon>
+          <mat-error *ngIf="userForm.get('email')?.invalid">
+            {{ getErrorMessage('email') }}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Rol -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Rol</mat-label>
+          <mat-select formControlName="role_id" placeholder="Seleccione un rol">
+            <mat-option *ngFor="let role of roles" [value]="role.id">
+              {{ role.nombre }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="userForm.get('role_id')?.invalid">
+            {{ getErrorMessage('role_id') }}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Toggle para cambiar contraseña (solo en modo edición) -->
+        <div *ngIf="isEditMode" class="password-toggle-section">
+          <button type="button" mat-stroked-button (click)="togglePasswordFields()">
+            <mat-icon>{{ showPasswordFields ? 'visibility_off' : 'vpn_key' }}</mat-icon>
+            {{ showPasswordFields ? 'Cancelar cambio de contraseña' : 'Cambiar contraseña' }}
+          </button>
+        </div>
+
+        <!-- Campos de contraseña -->
+        <div *ngIf="showPasswordFields" class="password-section">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Contraseña</mat-label>
+            <input matInput type="password" formControlName="password" placeholder="Mínimo 6 caracteres">
+            <mat-icon matPrefix>lock</mat-icon>
+            <mat-error *ngIf="userForm.get('password')?.invalid">
+              {{ getErrorMessage('password') }}
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Confirmar Contraseña</mat-label>
+            <input matInput type="password" formControlName="password_confirmation" placeholder="Repita la contraseña">
+            <mat-icon matPrefix>lock_outline</mat-icon>
+            <mat-error *ngIf="userForm.get('password_confirmation')?.invalid">
+              {{ getErrorMessage('password_confirmation') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Estado activo -->
+        <div class="toggle-section">
+          <label>Estado:</label>
+          <mat-slide-toggle formControlName="active" color="primary">
+            {{ userForm.get('active')?.value ? 'Activo' : 'Inactivo' }}
+          </mat-slide-toggle>
+        </div>
+
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button mat-button (click)="onCancel()" [disabled]="isSaving">
+        <mat-icon>cancel</mat-icon>
+        Cancelar
+      </button>
+      <button mat-raised-button color="primary" 
+              (click)="onSubmit()" 
+              [disabled]="userForm.invalid || isSaving">
+        <mat-spinner *ngIf="isSaving" diameter="20"></mat-spinner>
+        <mat-icon *ngIf="!isSaving">save</mat-icon>
+        {{ isSaving ? 'Guardando...' : 'Guardar' }}
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

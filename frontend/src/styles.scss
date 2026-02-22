@@ -1,4 +1,97 @@
 /* You can add global styles to this file, and also import other style files */
 
+/* ========================================== */
+/* EvaluaciónQA Design System Variables      */
+/* ========================================== */
+:root {
+  /* Brand Colors */
+  --primary-500: #3B82F6;
+  --primary-600: #2563EB;
+  --primary-700: #1E40AF;
+  --primary-rgb: 37, 99, 235;
+
+  /* Backgrounds */
+  --bg-base: #0B1220;
+  --bg-card: #111827;
+  --bg-section: #0F172A;
+
+  /* Borders */
+  --border-soft: rgba(255,255,255,0.06);
+
+  /* Text */
+  --text-primary: #E5E7EB;
+  --text-secondary: #9CA3AF;
+  --text-muted: #6B7280;
+
+  /* States */
+  --danger: #EF4444;
+  --success: #22C55E;
+}
+
+/* Box-sizing reset para consistencia */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Global Typography */
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+}
+
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body { margin: 0; }
+
+/* Snackbar custom styles */
+.success-snackbar {
+  background-color: #4caf50 !important;
+  color: white !important;
+  
+  .mat-mdc-button {
+    color: white !important;
+  }
+}
+
+.error-snackbar {
+  background-color: #f44336 !important;
+  color: white !important;
+  
+  .mat-mdc-button {
+    color: white !important;
+  }
+}
+
+.info-snackbar {
+  background-color: #2196f3 !important;
+  color: white !important;
+  
+  .mat-mdc-button {
+    color: white !important;
+  }
+}
+
+/* Material table improvements */
+.mat-mdc-table {
+  width: 100%;
+}
+
+/* Smooth transitions */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Route transitions - Smooth fade */
+router-outlet + * {
+  animation: routeFade 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes routeFade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

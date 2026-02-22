@@ -1,0 +1,92 @@
+.forbidden-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.forbidden-card {
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+mat-card-content {
+  padding: 40px 20px;
+}
+
+.icon-container {
+  margin-bottom: 24px;
+}
+
+.forbidden-icon {
+  font-size: 120px;
+  width: 120px;
+  height: 120px;
+  color: #f44336;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+h1 {
+  font-size: 32px;
+  font-weight: 500;
+  color: #333;
+  margin: 0 0 16px 0;
+}
+
+.message {
+  font-size: 16px;
+  color: #666;
+  margin: 0 0 32px 0;
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.actions button {
+  min-width: 200px;
+}
+
+.actions button mat-icon {
+  margin-right: 8px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .forbidden-card {
+    max-width: 100%;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  .forbidden-icon {
+    font-size: 80px;
+    width: 80px;
+    height: 80px;
+  }
+
+  mat-card-content {
+    padding: 30px 15px;
+  }
+}

@@ -1,0 +1,132 @@
+.user-form-container {
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+mat-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+mat-card-header {
+  margin-bottom: 20px;
+  padding: 16px;
+  background-color: #f5f5f5;
+  border-radius: 4px 4px 0 0;
+}
+
+mat-card-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 24px;
+  font-weight: 500;
+  margin: 0;
+}
+
+mat-card-title mat-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+}
+
+mat-card-content {
+  padding: 24px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* Fix para iconos de prefijo con outline appearance */
+mat-form-field.mat-form-field-appearance-outline mat-icon[matPrefix] {
+  margin-right: 8px;
+}
+
+.password-toggle-section {
+  margin: 16px 0;
+}
+
+.password-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  border-left: 4px solid #3f51b5;
+}
+
+.toggle-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.toggle-section label {
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+mat-card-actions {
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+mat-card-actions button mat-icon {
+  margin-right: 4px;
+}
+
+mat-card-actions button mat-spinner {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+/* Error styling */
+mat-error {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Hints */
+mat-hint {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+/* Asegurar espacio correcto en mat-select */
+mat-select {
+  margin-left: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .user-form-container {
+    padding: 10px;
+  }
+
+  mat-card-content {
+    padding: 16px;
+  }
+
+  mat-card-title {
+    font-size: 20px;
+  }
+}

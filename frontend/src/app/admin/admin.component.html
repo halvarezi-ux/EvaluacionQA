@@ -1,0 +1,84 @@
+<mat-toolbar color="primary" class="toolbar">
+  <mat-icon class="menu-icon">admin_panel_settings</mat-icon>
+  <span class="title">Panel de Administración</span>
+  <span class="spacer"></span>
+  <button mat-button (click)="logout()" class="logout-btn">
+    <mat-icon>logout</mat-icon>
+    Cerrar Sesión
+  </button>
+</mat-toolbar>
+
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav mode="side" opened class="sidenav">
+    <mat-nav-list>
+      <h3 mat-subheader>Menú de Administración</h3>
+      
+      <a mat-list-item routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+        <mat-icon matListItemIcon>dashboard</mat-icon>
+        <span matListItemTitle>Dashboard</span>
+      </a>
+      
+      <a mat-list-item routerLink="/admin/usuarios" routerLinkActive="active">
+        <mat-icon matListItemIcon>people</mat-icon>
+        <span matListItemTitle>Usuarios</span>
+      </a>
+
+      <mat-divider></mat-divider>
+
+      <h3 mat-subheader>Sistema</h3>
+      
+      <a mat-list-item routerLink="/admin/configuracion" routerLinkActive="active">
+        <mat-icon matListItemIcon>settings</mat-icon>
+        <span matListItemTitle>Configuración</span>
+      </a>
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="main-content">
+    <!-- Dashboard default cuando no hay subruta -->
+    <div *ngIf="router.url === '/admin'" class="dashboard-welcome">
+      <mat-card>
+        <mat-card-content>
+          <div class="welcome-header">
+            <mat-icon class="welcome-icon">admin_panel_settings</mat-icon>
+            <h1>¡Bienvenido, {{ currentUser?.name || 'Administrador' }}!</h1>
+          </div>
+          <p>Desde aquí podrás gestionar usuarios, roles y configuraciones del sistema.</p>
+          <!--<p *ngIf="currentUser"><strong>Usuario:</strong> {{ currentUser.user }} | <strong>Rol:</strong> {{ currentUser.role?.nombre || currentUser.role }}</p>-->
+          
+          <div class="quick-actions">
+            <h3>Acciones Rápidas</h3>
+            <div class="action-cards">
+              <mat-card class="action-card" routerLink="/admin/usuarios">
+                <mat-card-content>
+                  <mat-icon color="primary">people</mat-icon>
+                  <h4>Gestionar Usuarios</h4>
+                  <p>Crear, editar y eliminar usuarios del sistema</p>
+                </mat-card-content>
+              </mat-card>
+              
+              <mat-card class="action-card">
+                <mat-card-content>
+                  <mat-icon color="accent">assignment</mat-icon>
+                  <h4>Reportes</h4>
+                  <p>Ver estadísticas y reportes del sistema</p>
+                </mat-card-content>
+              </mat-card>
+              
+              <mat-card class="action-card">
+                <mat-card-content>
+                  <mat-icon color="warn">settings</mat-icon>
+                  <h4>Configuración</h4>
+                  <p>Ajustar parámetros del sistema</p>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Router outlet para las subrutas -->
+    <router-outlet></router-outlet>
+  </mat-sidenav-content>
+</mat-sidenav-container>

@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\RoleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,3 +23,13 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+
+// Protected routes - Admin only
+Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
+    // Users CRUD
+    Route::apiResource('users', UserController::class);
+    
+    // Roles (read-only)
+    Route::get('roles', [RoleController::class, 'index']);
+    Route::get('roles/{id}', [RoleController::class, 'show']);
+});

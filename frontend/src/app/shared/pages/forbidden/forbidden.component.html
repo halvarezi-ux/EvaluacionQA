@@ -1,0 +1,25 @@
+<div class="forbidden-container">
+  <mat-card class="forbidden-card">
+    <mat-card-content>
+      <div class="icon-container">
+        <mat-icon class="forbidden-icon">block</mat-icon>
+      </div>
+      
+      <h1>403 - Acceso Denegado</h1>
+      <p class="message">
+        No tiene los permisos necesarios para acceder a esta página.
+      </p>
+      
+      <div class="actions">
+        <button mat-raised-button color="primary" (click)="goToDashboard()">
+          <mat-icon>dashboard</mat-icon>
+          Ir al Dashboard
+        </button>
+        <button mat-button (click)="goToLogin()">
+          <mat-icon>login</mat-icon>
+          Iniciar Sesión
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

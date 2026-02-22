@@ -24,6 +24,11 @@ class AuthController extends Controller
             return response()->json(['message' => 'Credenciales inválidas'], 401);
         }
 
+        // Validar que el usuario esté activo
+        if (!$user->active) {
+            return response()->json(['message' => 'Usuario inactivo. Contacte al administrador.'], 403);
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         // Transformación manual: solo datos necesarios para el frontend
@@ -33,8 +38,12 @@ class AuthController extends Controller
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
+                'user' => $user->user,
                 'email' => $user->email,
-                'role' => $user->role->nombre,  // ← CLAVE: Nombre del rol (string)
+                'role' => [
+                    'id' => $user->role->id,
+                    'nombre' => $user->role->nombre
+                ],
                 'active' => $user->active
             ]
         ]);
