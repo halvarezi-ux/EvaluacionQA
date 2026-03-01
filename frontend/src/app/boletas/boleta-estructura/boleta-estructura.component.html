@@ -1,0 +1,296 @@
+<div class="builder-container">
+
+  <!-- ── Header ──────────────────────────────────────── -->
+  <div class="builder-header">
+    <button mat-icon-button class="back-btn" (click)="volver()" matTooltip="Volver a boletas">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div class="header-info">
+      <div class="breadcrumb">Boletas / Estructura</div>
+      <h1 class="page-title">{{ boleta?.nombre ?? 'Cargando...' }}</h1>
+    </div>
+    <div class="header-actions">
+      <!-- Publicar: solo visible cuando se está editando un borrador -->
+      <button mat-raised-button style="background:#10B981;color:#fff"
+              *ngIf="esBorrador"
+              (click)="publicarVersion()"
+              [disabled]="publicando"
+              matTooltip="Publica este borrador como la versión activa">
+        <mat-icon>rocket_launch</mat-icon>
+        {{ publicando ? 'Publicando...' : 'Publicar versión' }}
+      </button>
+      <button mat-raised-button color="primary"
+              (click)="crearSegmento()"
+              [disabled]="!canEdit">
+        <mat-icon>add</mat-icon>
+        Nuevo segmento
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Banner borrador ────────────────────────────── -->
+  <div class="borrador-banner" *ngIf="esBorrador && !loading">
+    <mat-icon>edit_note</mat-icon>
+    <div class="banner-text">
+      <strong>Editando borrador v{{ versionActiva?.numero_version }}</strong>
+      <span>La boleta original sigue activa y recibiendo evaluaciones. Al publicar, esta versión la reemplazará.</span>
+    </div>
+  </div>
+
+  <!-- ── Stats bar ──────────────────────────────────── -->
+  <div class="stats-bar" *ngIf="versionActiva && !loading">
+    <div class="stat-item">
+      <span class="stat-label">Total global</span>
+      <span class="stat-value">{{ boleta?.total_global }} pts</span>
+    </div>
+    <div class="stat-sep"></div>
+    <div class="stat-item">
+      <span class="stat-label">Versión</span>
+      <span class="stat-value">v{{ versionActiva.numero_version }}</span>
+    </div>
+    <div class="stat-sep"></div>
+    <div class="stat-item">
+      <span class="stat-label">Segmentos</span>
+      <span class="stat-value">{{ segmentos.length }}</span>
+    </div>
+    <div class="stat-sep"></div>
+    <div class="stat-item"
+         [class.stat-warn]="sumaPesos() < 100 && segmentos.length > 0"
+         [class.stat-full]="sumaPesos() >= 100">
+      <span class="stat-label">Suma de pesos</span>
+      <span class="stat-value">
+        {{ sumaPesos() }}%
+        <mat-icon *ngIf="sumaPesos() < 100 && segmentos.length > 0"
+                  class="warn-icon"
+                  matTooltip="La suma debe ser exactamente 100%">warning</mat-icon>
+        <mat-icon *ngIf="sumaPesos() >= 100"
+                  class="ok-icon"
+                  matTooltip="¡Perfecto! El 100% está distribuido">check_circle</mat-icon>
+      </span>
+    </div>
+    <div class="stat-sep"></div>
+    <div class="stat-item">
+      <span class="stat-label">Estado</span>
+      <span class="estado-pill" [ngClass]="'estado-' + boleta?.estado">{{ boleta?.estado_label }}</span>
+    </div>
+    <div class="stat-sep" *ngIf="!canEdit"></div>
+    <div class="stat-item readonly-notice" *ngIf="!canEdit">
+      <mat-icon>lock</mat-icon>
+      <span>Solo lectura</span>
+    </div>
+  </div>
+
+  <!-- ── Loading ─────────────────────────────────────── -->
+  <div class="loading-state" *ngIf="loading">
+    <mat-spinner [diameter]="48"></mat-spinner>
+    <p>Cargando estructura de la boleta...</p>
+  </div>
+
+  <!-- ── Empty ───────────────────────────────────────── -->
+  <div class="empty-main" *ngIf="!loading && versionActiva && segmentos.length === 0">
+    <div class="empty-icon-wrap">
+      <mat-icon>layers</mat-icon>
+    </div>
+    <h2>Sin segmentos</h2>
+    <p>Empieza creando el primer segmento de evaluación</p>
+    <button mat-raised-button color="primary" (click)="crearSegmento()" *ngIf="canEdit">
+      <mat-icon>add</mat-icon>
+      Crear primer segmento
+    </button>
+  </div>
+
+  <!-- ── Segments drag-drop list ─────────────────────── -->
+  <div *ngIf="!loading && versionActiva && segmentos.length > 0"
+       cdkDropList
+       class="segments-list"
+       [cdkDropListData]="segmentos"
+       [cdkDropListDisabled]="!canEdit"
+       (cdkDropListDropped)="onDropSegmento($event)">
+
+    <div *ngFor="let segmento of segmentos; let si = index"
+         cdkDrag
+         class="segment-card"
+         [class.segment-critico]="segmento.tipo === 'critico'"
+         [class.segment-resumen]="segmento.tipo === 'resumen'">
+
+      <!-- Drag placeholder ghost -->
+      <div class="drag-placeholder" *cdkDragPlaceholder></div>
+
+      <!-- ── Segment Header ───────────────────────────── -->
+      <div class="segment-header">
+        <div class="segment-drag-handle" cdkDragHandle [class.disabled]="!canEdit">
+          <mat-icon>drag_indicator</mat-icon>
+        </div>
+
+        <div class="segment-tipo-dot"></div>
+
+        <div class="segment-title-block">
+          <span class="segment-nombre">{{ segmento.nombre }}</span>
+          <div class="segment-badges">
+            <span class="chip chip-tipo">{{ segmento.tipo_label }}</span>
+            <span class="chip chip-peso" *ngIf="segmento.peso != null">
+              {{ segmento.peso }}%
+              <span class="chip-pts-sep">·</span>
+              <strong>{{ segmentoPts(segmento) }} pts</strong>
+            </span>
+            <span class="chip chip-pen" *ngIf="segmento.penalizacion">-{{ segmento.penalizacion }} pts pen.</span>
+            <span class="chip chip-count">{{ segmento.preguntas?.length || 0 }} preg.</span>
+            <!-- pts used indicator -->
+            <span class="chip chip-pts-used" *ngIf="segmento.tipo === 'normal' && segmentoPts(segmento) as total"
+                  [class.chip-pts-full]="segmentoLleno(segmento)"
+                  [class.chip-pts-ok]="!segmentoLleno(segmento)">
+              {{ ptsUsados(segmento) }}/{{ total }} pts
+            </span>
+          </div>
+        </div>
+
+        <div class="segment-actions">
+          <button mat-icon-button
+                  (click)="editarSegmento(segmento)"
+                  [disabled]="!canEdit"
+                  matTooltip="Editar segmento">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn"
+                  (click)="eliminarSegmento(segmento)"
+                  [disabled]="!canEdit"
+                  matTooltip="Eliminar segmento">
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+          <button mat-icon-button (click)="toggleSegmento(si)"
+                  [matTooltip]="expandedSegments.has(si) ? 'Contraer' : 'Expandir'">
+            <mat-icon>{{ expandedSegments.has(si) ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Segment Body ────────────────────────────── -->
+      <div class="segment-body" *ngIf="expandedSegments.has(si)">
+
+        <!-- Empty questions: show tipo-picker directly -->
+        <div class="preguntas-empty" *ngIf="!segmento.preguntas || segmento.preguntas.length === 0">
+          <mat-icon>quiz</mat-icon>
+          <p>Elige el tipo de pregunta para empezar</p>
+        </div>
+
+        <!-- Questions drag-drop list -->
+        <div *ngIf="segmento.preguntas && segmento.preguntas.length > 0"
+             cdkDropList
+             class="preguntas-list"
+             [cdkDropListData]="segmento.preguntas"
+             [cdkDropListDisabled]="!canEdit"
+             (cdkDropListDropped)="onDropPregunta(segmento, $event)">
+
+          <div *ngFor="let pregunta of segmento.preguntas; let pi = index"
+               cdkDrag
+               class="pregunta-card">
+
+            <div class="drag-placeholder pregunta-drag-placeholder" *cdkDragPlaceholder></div>
+
+            <div class="pregunta-drag-handle" cdkDragHandle [class.disabled]="!canEdit">
+              <mat-icon>drag_indicator</mat-icon>
+            </div>
+
+            <div class="pregunta-num">{{ pi + 1 }}</div>
+
+            <div class="pregunta-content">
+              <p class="pregunta-texto">{{ pregunta.texto }}</p>
+              <div class="pregunta-meta">
+                <span class="meta-chip mc-tipo">{{ pregunta.tipo_label }}</span>
+                <span class="meta-chip mc-peso" *ngIf="pregunta.peso != null">{{ pregunta.peso }} pts</span>
+                <span class="meta-chip mc-fatal" *ngIf="pregunta.anula_segmento">
+                  <mat-icon>warning</mat-icon> Anula segmento
+                </span>
+                <span class="meta-chip mc-opciones" *ngIf="pregunta.opciones && pregunta.opciones.length > 0">
+                  {{ pregunta.opciones.length }} opciones
+                </span>
+              </div>
+
+              <!-- Preview de opciones para Sí/No -->
+              <div class="opciones-preview" *ngIf="pregunta.tipo === 'si_no' && pregunta.opciones?.length">
+                <span *ngFor="let opc of pregunta.opciones"
+                      class="opc-pill"
+                      [class.opc-si]="opc.texto === 'Sí'"
+                      [class.opc-no]="opc.texto === 'No'">
+                  {{ opc.texto }} <em>({{ opc.valor }} pts)</em>
+                </span>
+              </div>
+
+              <!-- Preview de opciones múltiples -->
+              <div class="opciones-preview" *ngIf="pregunta.tipo === 'opcion_multiple' && pregunta.opciones?.length">
+                <span *ngFor="let opc of pregunta.opciones" class="opc-pill">
+                  {{ opc.texto }} <em>({{ opc.valor }} pts)</em>
+                </span>
+              </div>
+            </div>
+
+            <div class="pregunta-actions">
+              <button mat-icon-button
+                      (click)="editarPregunta(segmento, pregunta)"
+                      [disabled]="!canEdit"
+                      matTooltip="Editar">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn"
+                      (click)="eliminarPregunta(segmento, pregunta)"
+                      [disabled]="!canEdit"
+                      matTooltip="Eliminar">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Add question type picker ─────────────── -->
+        <div class="tipo-picker" *ngIf="canEdit">
+
+          <!-- Pts progress bar for normal segments -->
+          <div class="pts-progress-wrap" *ngIf="segmento.tipo === 'normal' && segmentoPts(segmento) as total">
+            <div class="pts-progress-labels">
+              <span class="pts-label-left">
+                <mat-icon>bolt</mat-icon>
+                {{ ptsUsados(segmento) }} / {{ total }} pts usados
+              </span>
+              <span class="pts-label-right" [class.pts-full]="segmentoLleno(segmento)">
+                <ng-container *ngIf="!segmentoLleno(segmento)">{{ ptsRestantes(segmento) }} disponibles</ng-container>
+                <ng-container *ngIf="segmentoLleno(segmento)">⚠️ Segmento lleno</ng-container>
+              </span>
+            </div>
+            <div class="pts-progress-track">
+              <div class="pts-progress-fill"
+                   [class.pts-progress-full]="segmentoLleno(segmento)"
+                   [style.width.%]="(ptsUsados(segmento) / total) * 100 | number:'1.0-0'"></div>
+            </div>
+          </div>
+
+          <div class="tipo-picker-header">
+            <span class="tipo-picker-label">
+              <mat-icon>add_circle</mat-icon>
+              Agregar pregunta:
+            </span>
+            <span class="pts-full-notice" *ngIf="segmentoLleno(segmento)">
+              Solo puedes agregar preguntas sin puntos (Texto libre)
+            </span>
+          </div>
+          <div class="tipo-picker-btns">
+            <button *ngFor="let tipo of tiposPregunta"
+                    class="tipo-btn"
+                    [class]="'tb-' + tipo.value"
+                    [class.tb-creating]="creatingTipo === tipo.value + '-' + segmento.id"
+                    [class.tb-blocked]="tipoCostaPuntos(tipo.value) && segmentoLleno(segmento)"
+                    [disabled]="creatingTipo !== null || (tipoCostaPuntos(tipo.value) && segmentoLleno(segmento))"
+                    (click)="crearPreguntaTipo(segmento, tipo.value)"
+                    [matTooltip]="tipoCostaPuntos(tipo.value) && segmentoLleno(segmento) ? 'Segmento sin pts disponibles' : tipo.description">
+              <mat-spinner *ngIf="creatingTipo === tipo.value + '-' + segmento.id"
+                           [diameter]="16" class="btn-spinner"></mat-spinner>
+              <mat-icon *ngIf="creatingTipo !== tipo.value + '-' + segmento.id">{{ tipo.icon }}</mat-icon>
+              <span>{{ tipo.label }}</span>
+            </button>
+          </div>
+        </div>
+
+      </div><!-- /segment-body -->
+    </div><!-- /segment-card -->
+  </div><!-- /segments-list -->
+
+</div><!-- /builder-container -->

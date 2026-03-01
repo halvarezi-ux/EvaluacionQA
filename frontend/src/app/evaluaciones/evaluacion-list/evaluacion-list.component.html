@@ -136,4 +136,15 @@
     </table>
   </div>
 
+  <!-- Paginador -->
+  <mat-paginator class="paginador"
+    *ngIf="!isLoading && totalItems > perPage"
+    [length]="totalItems"
+    [pageSize]="perPage"
+    [pageIndex]="currentPage - 1"
+    [pageSizeOptions]="[10, 15, 25, 50]"
+    showFirstLastButtons
+    (page)="onPage($event)">
+  </mat-paginator>
+
 </div>

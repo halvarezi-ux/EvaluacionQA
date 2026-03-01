@@ -29,6 +29,12 @@ class BoletaResource extends JsonResource
             'versiones_count'  => $this->whenCounted('versiones'),
             'versiones'        => BoletaVersionResource::collection($this->whenLoaded('versiones')),
             'version_activa'   => new BoletaVersionResource($this->whenLoaded('versionActiva')),
+            'borrador_version_id' => $this->whenLoaded('versiones', function () {
+                return $this->versiones
+                    ->where('es_activa', false)
+                    ->sortByDesc('numero_version')
+                    ->first()?->id;
+            }),
             'created_at'       => $this->created_at?->toDateTimeString(),
             'updated_at'       => $this->updated_at?->toDateTimeString(),
         ];

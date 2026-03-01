@@ -134,7 +134,9 @@
   background: linear-gradient(90deg, var(--brand), var(--brand-light));
   margin: 0;
 }
-.card-header-strip.green { background: linear-gradient(90deg, var(--success), #34D399); }
+.card-header-strip.green  { background: linear-gradient(90deg, var(--success), #34D399); }
+.card-header-strip.orange { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
+.card-header-strip.red    { background: linear-gradient(90deg, #EF4444, #F87171); }
 
 mat-card-header { padding-top: 20px !important; }
 

@@ -269,6 +269,32 @@
 }
 .estado-inactiva::before { background: #9CA3AF; }
 
+/* aliases para valores reales del backend */
+.estado-draft {
+  background: #FFFBEB;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+}
+.estado-draft::before { background: #F59E0B; }
+
+.estado-activa {
+  background: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #6EE7B7;
+}
+.estado-activa::before {
+  background: #10B981;
+  box-shadow: 0 0 0 3px rgba(16,185,129,.2);
+  animation: pulse-green 2s infinite;
+}
+
+.estado-archivada {
+  background: #F9FAFB;
+  color: #6B7280;
+  border: 1px solid #E5E7EB;
+}
+.estado-archivada::before { background: #9CA3AF; }
+
 @keyframes pulse-green {
   0%, 100% { box-shadow: 0 0 0 2px rgba(16,185,129,.25); }
   50%       { box-shadow: 0 0 0 5px rgba(16,185,129,.05); }

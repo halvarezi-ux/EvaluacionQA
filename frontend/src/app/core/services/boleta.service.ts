@@ -61,11 +61,30 @@ export class BoletaService {
     );
   }
 
+  /** Reactiva la boleta (archivada → activa). */
+  reactivarBoleta(id: number): Observable<Boleta> {
+    return this.http.post<{ data: Boleta }>(`${this.api}/${id}/reactivar`, {}).pipe(
+      map(r => r.data)
+    );
+  }
+
   /** Clona la versión activa para permitir edición sin romper evaluaciones existentes. */
   clonarVersion(id: number): Observable<Boleta> {
     return this.http.post<{ data: Boleta }>(`${this.api}/${id}/clonar-version`, {}).pipe(
       map(r => r.data)
     );
+  }
+
+  /** Publica una versión borrador como la nueva activa (la anterior queda desactivada). */
+  publicarVersionBorrador(boletaId: number, versionId: number): Observable<Boleta> {
+    return this.http.post<{ data: Boleta }>(`${this.api}/${boletaId}/publicar-borrador/${versionId}`, {}).pipe(
+      map(r => r.data)
+    );
+  }
+
+  /** Descarta una versión borrador (no activa) y elimina todo su contenido. */
+  descartarBorrador(boletaId: number, versionId: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/${boletaId}/borrador/${versionId}`);
   }
 }
 

@@ -10,6 +10,7 @@ import { MatInputModule }                   from '@angular/material/input';
 import { MatSelectModule }                  from '@angular/material/select';
 import { MatTooltipModule }                 from '@angular/material/tooltip';
 import { MatProgressSpinnerModule }         from '@angular/material/progress-spinner';
+import { MatPaginatorModule, PageEvent }    from '@angular/material/paginator';
 
 import { EvaluacionService }               from '../services/evaluacion.service';
 import { NotificationService }             from '../../shared/services/notification.service';
@@ -24,6 +25,7 @@ import { nivelClass }                      from '../models/evaluacion.model';
     MatTableModule, MatButtonModule, MatIconModule,
     MatFormFieldModule, MatInputModule, MatSelectModule,
     MatTooltipModule, MatProgressSpinnerModule,
+    MatPaginatorModule,
   ],
   templateUrl: './evaluacion-list.component.html',
   styleUrls:   ['./evaluacion-list.component.css'],
@@ -33,6 +35,7 @@ export class EvaluacionListComponent implements OnInit {
   isLoading     = false;
   totalItems    = 0;
   currentPage   = 1;
+  perPage       = 15;
 
   filtroAgenteNombre = '';
   filtroEstado       = '';
@@ -51,7 +54,7 @@ export class EvaluacionListComponent implements OnInit {
 
   loadEvaluaciones(): void {
     this.isLoading = true;
-    const f: Record<string, any> = { page: this.currentPage };
+    const f: Record<string, any> = { page: this.currentPage, per_page: this.perPage };
     if (this.filtroAgenteNombre) f['agente_nombre'] = this.filtroAgenteNombre;
     if (this.filtroEstado)       f['estado']        = this.filtroEstado;
 
@@ -69,6 +72,12 @@ export class EvaluacionListComponent implements OnInit {
   }
 
   applyFiltros(): void { this.currentPage = 1; this.loadEvaluaciones(); }
+
+  onPage(e: PageEvent): void {
+    this.currentPage = e.pageIndex + 1;
+    this.perPage     = e.pageSize;
+    this.loadEvaluaciones();
+  }
 
   clearFiltros(): void {
     this.filtroAgenteNombre = '';

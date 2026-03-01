@@ -26,7 +26,7 @@ class UpdateBoletaRequest extends FormRequest
             'pais'             => ['sometimes', 'nullable', 'string', 'max:100'],
             'cliente'          => ['sometimes', 'nullable', 'string', 'max:255'],
             'tipo_interaccion' => ['sometimes', 'nullable', 'in:llamada,chat,email'],
-            'total_global'     => ['sometimes', 'nullable', 'numeric', 'min:1', 'max:1000'],
+            'total_global'     => ['sometimes', 'nullable', 'numeric', 'min:1', 'max:9999.99'],
         ];
     }
 

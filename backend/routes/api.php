@@ -37,9 +37,12 @@ Route::middleware(['auth:sanctum', 'role:Admin,QA Lead'])->group(function () {
     Route::apiResource('boletas', BoletaController::class);
 
     // Lifecycle de boleta
-    Route::post('boletas/{id}/activar',       [BoletaController::class, 'activar']);
-    Route::post('boletas/{id}/archivar',      [BoletaController::class, 'archivar']);
-    Route::post('boletas/{id}/clonar-version', [BoletaController::class, 'clonarVersion']);
+    Route::post('boletas/{id}/activar',               [BoletaController::class, 'activar']);
+    Route::post('boletas/{id}/archivar',              [BoletaController::class, 'archivar']);
+    Route::post('boletas/{id}/reactivar',             [BoletaController::class, 'reactivar']);
+    Route::post('boletas/{id}/clonar-version',        [BoletaController::class, 'clonarVersion']);
+    Route::post('boletas/{id}/publicar-borrador/{versionId}', [BoletaController::class, 'publicarBorrador']);
+    Route::delete('boletas/{id}/borrador/{versionId}', [BoletaController::class, 'descartarBorrador']);
 
     // Áreas
     Route::apiResource('areas', AreaController::class);

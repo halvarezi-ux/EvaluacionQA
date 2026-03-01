@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Area;
 use App\Http\Requests\StoreAreaRequest;
+use App\Http\Requests\UpdateAreaRequest;
 use App\Http\Resources\AreaResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -57,7 +58,7 @@ class AreaController extends Controller
     /**
      * PUT /areas/{id}
      */
-    public function update(StoreAreaRequest $request, string $id): JsonResponse
+    public function update(UpdateAreaRequest $request, string $id): JsonResponse
     {
         $area = Area::findOrFail($id);
         $area->update($request->validated());

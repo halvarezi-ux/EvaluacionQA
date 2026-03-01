@@ -1,0 +1,74 @@
+<mat-sidenav-container class="layout-container" autosize>
+
+  <!-- ─── Sidenav ─────────────────────────────────── -->
+  <mat-sidenav
+    #sidenav
+    [mode]="isMobile ? 'over' : 'side'"
+    [opened]="!isMobile"
+    class="app-sidenav">
+
+    <!-- Logo -->
+    <div class="sidenav-logo">
+      <div class="logo-icon">
+        <mat-icon>verified</mat-icon>
+      </div>
+      <div class="logo-text">
+        <span class="logo-name">EvaluaciónQA</span>
+        <span class="logo-sub">Sistema de Calidad</span>
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- Navigation -->
+    <nav class="sidenav-nav">
+      <a
+        *ngFor="let item of visibleItems"
+        class="nav-item"
+        [routerLink]="item.route"
+        routerLinkActive="nav-item-active"
+        [routerLinkActiveOptions]="{ exact: false }"
+        (click)="isMobile && sidenav.close()">
+        <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
+        <span class="nav-label">{{ item.label }}</span>
+      </a>
+    </nav>
+
+    <div class="sidenav-spacer"></div>
+    <mat-divider></mat-divider>
+
+    <!-- User info + logout -->
+    <div class="sidenav-user">
+      <div class="user-avatar">{{ getUserInitials() }}</div>
+      <div class="user-info">
+        <span class="user-name">{{ currentUser?.name || 'Usuario' }}</span>
+        <span class="user-role">{{ getUserRole() }}</span>
+      </div>
+      <button mat-icon-button class="logout-btn"
+              (click)="logout()"
+              matTooltip="Cerrar sesión">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </div>
+
+  </mat-sidenav>
+
+  <!-- ─── Main content ─────────────────────────────── -->
+  <mat-sidenav-content class="layout-content">
+
+    <!-- Mobile toolbar -->
+    <mat-toolbar *ngIf="isMobile" class="mobile-toolbar">
+      <button mat-icon-button (click)="toggleSidenav()">
+        <mat-icon>menu</mat-icon>
+      </button>
+      <span class="toolbar-brand">EvaluaciónQA</span>
+    </mat-toolbar>
+
+    <!-- Page outlet -->
+    <div class="page-content">
+      <router-outlet></router-outlet>
+    </div>
+
+  </mat-sidenav-content>
+
+</mat-sidenav-container>

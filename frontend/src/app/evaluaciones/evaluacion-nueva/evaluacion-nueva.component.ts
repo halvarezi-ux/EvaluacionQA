@@ -177,9 +177,15 @@ export class EvaluacionNuevaComponent implements OnInit, OnDestroy {
       .filter(({ pregunta }) => pregunta.segmento_id === segmento.id);
   }
 
-  /** Comentario es requerido para esta pregunta */
+  /** Comentario se muestra según la configuración y el valor actual de la respuesta */
   comentarioRequerido(pregunta: Pregunta): boolean {
-    return ['siempre', 'si_es_no', 'si_es_si', 'si_penaliza'].includes(pregunta.comentario_requerido);
+    const config = pregunta.comentario_requerido;
+    if (!config || config === 'nunca') return false;
+    if (config === 'siempre') return true;
+    const valor = this.getRespuestaValue(pregunta.id);
+    if (config === 'si_es_no') return valor === 'No';
+    if (config === 'si_es_si') return valor === 'Sí';
+    return false;
   }
 
   /** Encontrar índice en el FormArray para una pregunta específica */

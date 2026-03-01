@@ -98,16 +98,17 @@
               </mat-panel-description>
             </mat-expansion-panel-header>
 
-            <div class="preguntas-list" formArrayName="respuestas">
-              <div *ngFor="let pregunta of seg.preguntas; let pi = index" 
+            <div class="criterios-list" formArrayName="respuestas">
+              <div *ngFor="let pregunta of seg.preguntas; let pi = index"
                    [formGroupName]="getPreguntaFormIndex(pregunta.id)"
-                   class="pregunta-row">
-                
-                <div class="pregunta-left">
-                  <div class="pregunta-num">{{ pi + 1 }}</div>
-                  <div class="pregunta-texto-wrap">
-                    <p class="pregunta-texto">{{ pregunta.texto }}</p>
-                    <div class="pregunta-meta">
+                   class="criterio-row"
+                   [class.criterio-completado]="getRespuestaValue(pregunta.id) !== null && getRespuestaValue(pregunta.id) !== undefined && getRespuestaValue(pregunta.id) !== ''">
+
+                <div class="criterio-left">
+                  <div class="criterio-num">{{ pi + 1 }}</div>
+                  <div class="criterio-texto-wrap">
+                    <p class="criterio-texto">{{ pregunta.texto }}</p>
+                    <div class="criterio-meta">
                       <span class="peso-badge">Peso: {{ pregunta.peso }}%</span>
                       <span class="tipo-badge">{{ pregunta.tipo_label }}</span>
                       <span *ngIf="pregunta.anula_segmento" class="fatal-badge">
@@ -117,16 +118,19 @@
                   </div>
                 </div>
 
-                <div class="pregunta-widget">
+                <div class="criterio-widget">
                   <!-- Respuesta según tipo -->
                   <ng-container [ngSwitch]="pregunta.tipo">
                     <!-- SI_NO -->
-                    <div *ngSwitchCase="'si_no'" class="opciones-btns">
-                      <button type="button" 
+                    <div *ngSwitchCase="'si_no'" class="check-btns">
+                      <button type="button"
                               *ngFor="let opc of pregunta.opciones"
-                              class="opcion-btn"
+                              class="check-btn"
+                              [class.si]="opc.texto === 'Sí'"
+                              [class.no]="opc.texto === 'No'"
                               [class.active]="getRespuestaValue(pregunta.id) === opc.texto"
                               (click)="setRespuestaValue(pregunta.id, opc.texto)">
+                        <mat-icon>{{ opc.texto === 'Sí' ? 'check_circle' : 'cancel' }}</mat-icon>
                         {{ opc.texto }}
                       </button>
                     </div>
@@ -149,16 +153,16 @@
                     </div>
 
                     <!-- NUMERICA -->
-                    <div *ngSwitchCase="'numerica'" class="numerica-input">
-                      <input type="number" formControlName="respuesta_valor" placeholder="Ingresa un número">
+                    <div *ngSwitchCase="'numerica'">
+                      <input type="number" class="obs-input" formControlName="respuesta_valor" placeholder="Ingresa un número">
                     </div>
 
                     <!-- CHECKLIST -->
-                    <div *ngSwitchCase="'checklist'" class="checklist-opciones">
+                    <div *ngSwitchCase="'checklist'" class="check-btns">
                       <button type="button"
                               *ngFor="let opc of pregunta.opciones"
-                              class="check-item"
-                              [class.checked]="getRespuestaValue(pregunta.id) === opc.texto"
+                              class="check-btn parcial"
+                              [class.active]="getRespuestaValue(pregunta.id) === opc.texto"
                               (click)="setRespuestaValue(pregunta.id, opc.texto)">
                         <mat-icon>{{ getRespuestaValue(pregunta.id) === opc.texto ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
                         {{ opc.texto }}
@@ -166,23 +170,23 @@
                     </div>
 
                     <!-- TEXTO_LIBRE -->
-                    <div *ngSwitchCase="'texto_libre'" class="texto-input">
-                      <textarea formControlName="respuesta_valor" 
+                    <div *ngSwitchCase="'texto_libre'">
+                      <textarea class="obs-input" formControlName="respuesta_valor"
                                 placeholder="Escribe tu respuesta..."
                                 rows="2"></textarea>
                     </div>
 
                     <!-- DEFAULT -->
-                    <div *ngSwitchDefault class="default-input">
-                      <input type="text" formControlName="respuesta_valor" placeholder="Respuesta">
+                    <div *ngSwitchDefault>
+                      <input type="text" class="obs-input" formControlName="respuesta_valor" placeholder="Respuesta">
                     </div>
                   </ng-container>
 
                   <!-- Comentario -->
-                  <div class="comentario-field" *ngIf="comentarioRequerido(pregunta)">
-                    <textarea formControlName="comentario"
-                              placeholder="Comentario (requerido)"
-                              rows="1"></textarea>
+                  <div *ngIf="comentarioRequerido(pregunta)">
+                    <textarea class="obs-input" formControlName="comentario"
+                              placeholder="Comentario (requerido)..."
+                              rows="1" style="margin-top: 6px;"></textarea>
                   </div>
                 </div>
               </div>

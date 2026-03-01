@@ -1,11 +1,14 @@
-import { Component, OnInit, inject } from '@angular/core';
+﻿import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { forkJoin } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ConfirmDialogComponent } from '../../shared/dialogs/confirm-dialog/confirm-dialog.component';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatChipsModule } from '@angular/material/chips';
+import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -16,6 +19,13 @@ import { NotificationService } from '../../shared/services/notification.service'
 import { Boleta, BoletaVersion, Segmento, Pregunta } from '../../core/models/boleta.model';
 import { SegmentoDialogComponent } from './segmento-dialog.component';
 import { PreguntaDialogComponent } from './pregunta-dialog.component';
+
+interface TipoPreguntaOption {
+  value: string;
+  label: string;
+  icon: string;
+  description: string;
+}
 
 @Component({
   selector: 'app-boleta-estructura',
@@ -30,272 +40,10 @@ import { PreguntaDialogComponent } from './pregunta-dialog.component';
     MatDialogModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    DragDropModule,
   ],
-  template: `
-    <div class="container">
-      <div class="header">
-        <button mat-icon-button (click)="volver()">
-          <mat-icon>arrow_back</mat-icon>
-        </button>
-        <div>
-          <h1>Estructura de Boleta</h1>
-          <p class="subtitle" *ngIf="boleta">{{ boleta.nombre }} - Versión {{ versionActiva?.numero_version }}</p>
-        </div>
-        <button mat-raised-button color="primary" 
-                (click)="distribuirPesos()"
-                [disabled]="!versionActiva || segmentos.length === 0"
-                matTooltip="Distribuir pesos equitativamente entre segmentos">
-          <mat-icon>balance</mat-icon>
-          Distribuir Pesos
-        </button>
-      </div>
-
-      <mat-spinner *ngIf="loading" diameter="50"></mat-spinner>
-
-      <div *ngIf="!loading && versionActiva">
-        <!-- Información de la versión -->
-        <mat-card class="version-info">
-          <mat-card-content>
-            <div class="info-grid">
-              <div>
-                <strong>Total Global:</strong> {{ boleta?.total_global }} puntos
-              </div>
-              <div>
-                <strong>Estado:</strong> 
-                <mat-chip [class.chip-draft]="boleta?.estado === 'draft'"
-                          [class.chip-activa]="boleta?.estado === 'activa'"
-                          [class.chip-archivada]="boleta?.estado === 'archivada'">
-                  {{ boleta?.estado_label }}
-                </mat-chip>
-              </div>
-              <div>
-                <strong>Segmentos:</strong> {{ segmentos.length }}
-              </div>
-              <div>
-                <strong>Suma de pesos:</strong> {{ sumaPesos() }}%
-                <mat-icon *ngIf="sumaPesos() !== 100" color="warn" matTooltip="La suma debe ser 100%">warning</mat-icon>
-              </div>
-            </div>
-          </mat-card-content>
-        </mat-card>
-
-        <!-- Lista de segmentos -->
-        <div class="actions-bar">
-          <button mat-raised-button color="primary" (click)="crearSegmento()" [disabled]="!versionActiva?.es_editable">
-            <mat-icon>add</mat-icon>
-            Nuevo Segmento
-          </button>
-        </div>
-
-        <mat-accordion *ngIf="segmentos.length > 0">
-          <mat-expansion-panel *ngFor="let segmento of segmentos">
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                <strong>{{ segmento.nombre }}</strong>
-                <mat-chip class="ml-2">{{ segmento.tipo_label }}</mat-chip>
-              </mat-panel-title>
-              <mat-panel-description>
-                Peso: {{ segmento.peso }}% | Preguntas: {{ segmento.preguntas?.length || 0 }}
-                <span *ngIf="segmento.penalizacion" class="ml-2" style="color: #f44336;">
-                  Penalización: -{{ segmento.penalizacion }}%
-                </span>
-              </mat-panel-description>
-            </mat-expansion-panel-header>
-
-            <!-- Preguntas del segmento -->
-            <div class="preguntas-container">
-              <div class="preguntas-header">
-                <h3>Preguntas</h3>
-                <div>
-                  <button mat-button color="primary" (click)="crearPregunta(segmento)" [disabled]="!versionActiva?.es_editable">
-                    <mat-icon>add</mat-icon>
-                    Nueva Pregunta
-                  </button>
-                  <button mat-icon-button (click)="editarSegmento(segmento)" [disabled]="!versionActiva?.es_editable">
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  <button mat-icon-button color="warn" (click)="eliminarSegmento(segmento)" [disabled]="!versionActiva?.es_editable">
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </div>
-              </div>
-
-              <div *ngIf="!segmento.preguntas || segmento.preguntas.length === 0" class="empty-state">
-                <mat-icon>quiz</mat-icon>
-                <p>No hay preguntas en este segmento</p>
-              </div>
-
-              <mat-card *ngFor="let pregunta of segmento.preguntas" class="pregunta-card">
-                <mat-card-content>
-                  <div class="pregunta-header">
-                    <div class="pregunta-info">
-                      <strong>{{ pregunta.texto }}</strong>
-                      <div class="pregunta-meta">
-                        <mat-chip>{{ pregunta.tipo_label }}</mat-chip>
-                        <span>Peso: {{ pregunta.peso ?? '—' }}%</span>
-                        <span *ngIf="pregunta.anula_segmento" style="color: #f44336;">⚠ Anula segmento</span>
-                      </div>
-                    </div>
-                    <div class="pregunta-actions">
-                      <button mat-icon-button (click)="editarPregunta(segmento, pregunta)" [disabled]="!versionActiva?.es_editable">
-                        <mat-icon>edit</mat-icon>
-                      </button>
-                      <button mat-icon-button color="warn" (click)="eliminarPregunta(segmento, pregunta)" [disabled]="!versionActiva?.es_editable">
-                        <mat-icon>delete</mat-icon>
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- Opciones de respuesta -->
-                  <div *ngIf="pregunta.opciones && pregunta.opciones.length > 0" class="opciones-container">
-                    <strong>Opciones:</strong>
-                    <ul class="opciones-list">
-                      <li *ngFor="let opcion of pregunta.opciones">
-                        {{ opcion.texto }} 
-                        <span class="opcion-puntos">({{ opcion.valor }} pts)</span>
-                      </li>
-                    </ul>
-                  </div>
-                </mat-card-content>
-              </mat-card>
-            </div>
-          </mat-expansion-panel>
-        </mat-accordion>
-
-        <div *ngIf="segmentos.length === 0" class="empty-state-main">
-          <mat-icon>layers</mat-icon>
-          <h2>No hay segmentos definidos</h2>
-          <p>Comienza creando el primer segmento de esta boleta</p>
-          <button mat-raised-button color="primary" (click)="crearSegmento()">
-            <mat-icon>add</mat-icon>
-            Crear Primer Segmento
-          </button>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 24px;
-      h1 {
-        margin: 0;
-        font-size: 24px;
-      }
-      .subtitle {
-        margin: 4px 0 0 0;
-        color: #666;
-        font-size: 14px;
-      }
-    }
-    .version-info {
-      margin-bottom: 24px;
-    }
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-    }
-    .actions-bar {
-      margin-bottom: 16px;
-    }
-    .preguntas-container {
-      padding: 16px 0;
-    }
-    .preguntas-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-      h3 {
-        margin: 0;
-      }
-    }
-    .pregunta-card {
-      margin-bottom: 12px;
-    }
-    .pregunta-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-    .pregunta-info {
-      flex: 1;
-    }
-    .pregunta-meta {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      margin-top: 8px;
-      font-size: 13px;
-      color: #666;
-      mat-chip {
-        height: 24px;
-      }
-    }
-    .pregunta-actions {
-      display: flex;
-      gap: 4px;
-    }
-    .opciones-container {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #e0e0e0;
-    }
-    .opciones-list {
-      margin: 8px 0 0 0;
-      padding-left: 20px;
-      li {
-        margin-bottom: 4px;
-      }
-    }
-    .opcion-puntos {
-      color: #2196F3;
-      font-weight: 500;
-    }
-    .empty-state {
-      text-align: center;
-      padding: 32px;
-      color: #999;
-      mat-icon {
-        font-size: 48px;
-        width: 48px;
-        height: 48px;
-        opacity: 0.3;
-      }
-    }
-    .empty-state-main {
-      text-align: center;
-      padding: 64px 32px;
-      mat-icon {
-        font-size: 96px;
-        width: 96px;
-        height: 96px;
-        opacity: 0.2;
-      }
-      h2 {
-        color: #666;
-      }
-      p {
-        color: #999;
-        margin-bottom: 24px;
-      }
-    }
-    .chip-draft { background-color: #FFC107; }
-    .chip-activa { background-color: #4CAF50; color: white; }
-    .chip-archivada { background-color: #9E9E9E; color: white; }
-    .ml-2 { margin-left: 8px; }
-    mat-spinner {
-      margin: 40px auto;
-    }
-  `]
+  templateUrl: './boleta-estructura.component.html',
+  styleUrls: ['./boleta-estructura.component.scss'],
 })
 export class BoletaEstructuraComponent implements OnInit {
   private route = inject(ActivatedRoute);
@@ -307,13 +55,41 @@ export class BoletaEstructuraComponent implements OnInit {
   private notificationService = inject(NotificationService);
 
   boletaId!: number;
+  versionBorradorId: number | null = null;   // set when ?borrador=X query param present
   boleta: Boleta | null = null;
   versionActiva: BoletaVersion | null = null;
   segmentos: Segmento[] = [];
   loading = true;
+  publicando = false;
+  hasChanges = false;  // tracks if any edit was made in this borrador session
+
+  /** Tracks which segment indices are expanded */
+  expandedSegments = new Set<number>();
+
+  /** Key = tipo+segmentoId while a quick-add API call is in flight */
+  creatingTipo: string | null = null;
+
+  readonly tiposPregunta: TipoPreguntaOption[] = [
+    { value: 'si_no',           label: 'Sí / No',     icon: 'toggle_on',  description: 'Respuesta binaria Sí o No con puntaje configurable' },
+    { value: 'opcion_multiple', label: 'Múltiple',    icon: 'list',       description: 'El evaluador elige una opción de la lista' },
+    { value: 'porcentaje',      label: 'Porcentaje',  icon: 'percent',    description: 'Valor del 0 al 100% con slider' },
+    { value: 'numerica',        label: 'Numérica',    icon: 'pin',        description: 'Ingreso de un valor numérico' },
+    { value: 'checklist',       label: 'Checklist',   icon: 'checklist',  description: 'Selección de una opción de una lista checklist' },
+    { value: 'texto_libre',     label: 'Texto libre', icon: 'notes',      description: 'Campo de texto libre para observaciones' },
+  ];
+
+  get canEdit(): boolean {
+    // Borrador versions are always editable (no active evaluations)
+    if (this.versionBorradorId) return true;
+    return this.versionActiva?.es_editable ?? false;
+  }
+
+  get esBorrador(): boolean { return !!this.versionBorradorId; }
 
   ngOnInit(): void {
     this.boletaId = Number(this.route.snapshot.paramMap.get('id'));
+    const borrador = this.route.snapshot.queryParamMap.get('borrador');
+    this.versionBorradorId = borrador ? Number(borrador) : null;
     this.cargarDatos();
   }
 
@@ -322,7 +98,13 @@ export class BoletaEstructuraComponent implements OnInit {
     this.boletaService.getBoleta(this.boletaId).subscribe({
       next: (boleta) => {
         this.boleta = boleta;
-        this.versionActiva = boleta.versiones?.find(v => v.es_activa) || null;
+        if (this.versionBorradorId) {
+          // Load the specific draft version for editing
+          const version = boleta.versiones?.find(v => v.id === this.versionBorradorId);
+          this.versionActiva = version ?? boleta.versiones?.find(v => v.es_activa) ?? null;
+        } else {
+          this.versionActiva = boleta.versiones?.find(v => v.es_activa) || null;
+        }
         if (this.versionActiva) {
           this.cargarSegmentos();
         } else {
@@ -341,9 +123,11 @@ export class BoletaEstructuraComponent implements OnInit {
     this.segmentoService.getSegmentos(this.versionActiva.id).subscribe({
       next: (segmentos) => {
         this.segmentos = segmentos;
+        this.expandedSegments.clear();
+        segmentos.forEach((_, i) => this.expandedSegments.add(i));
         this.loading = false;
       },
-      error: (err) => {
+      error: () => {
         this.notificationService.showError('Error al cargar segmentos');
         this.loading = false;
       }
@@ -353,90 +137,133 @@ export class BoletaEstructuraComponent implements OnInit {
   crearSegmento(): void {
     const dialogRef = this.dialog.open(SegmentoDialogComponent, {
       width: '600px',
-      data: { versionId: this.versionActiva!.id }
+      data: { versionId: this.versionActiva!.id, pesoRestante: this.pesoRestante() }
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
+        this.hasChanges = true;
         this.cargarSegmentos();
       }
     });
   }
 
   editarSegmento(segmento: Segmento): void {
+    // For editing, max = remaining + the segment's own current weight
+    const maxParaEsteSegmento = this.pesoRestante() + Number(segmento.peso ?? 0);
     const dialogRef = this.dialog.open(SegmentoDialogComponent, {
       width: '600px',
-      data: { segmento, versionId: this.versionActiva!.id }
+      data: {
+        segmento,
+        versionId: this.versionActiva!.id,
+        pesoRestante: maxParaEsteSegmento,
+        ptsUsados: this.ptsUsados(segmento),
+        totalGlobal: this.boleta?.total_global ?? 100,
+      }
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
+        this.hasChanges = true;
         this.cargarSegmentos();
       }
     });
   }
 
   eliminarSegmento(segmento: Segmento): void {
-    if (!confirm(`¿Eliminar el segmento "${segmento.nombre}"? Se eliminarán también todas sus preguntas.`)) return;
-
-    this.segmentoService.deleteSegmento(segmento.id).subscribe({
-      next: () => {
-        this.notificationService.showSuccess('Segmento eliminado');
-        this.cargarSegmentos();
-      },
-      error: (err) => {
-        this.notificationService.showError(err.error?.message ?? 'Error al eliminar');
+    this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Eliminar segmento',
+        message: `¿Eliminar "${segmento.nombre}"? Se eliminarán también todas sus preguntas.`,
+        confirmText: 'Eliminar',
       }
+    }).afterClosed().subscribe(confirmed => {
+      if (!confirmed) return;
+      // Optimistic: remove immediately from local array
+      const idx = this.segmentos.findIndex(s => s.id === segmento.id);
+      if (idx !== -1) this.segmentos.splice(idx, 1);
+      this.segmentoService.deleteSegmento(segmento.id).subscribe({
+        next: () => {
+          this.hasChanges = true;
+          this.notificationService.showSuccess('Segmento eliminado');
+        },
+        error: (err) => {
+          // Rollback: re-insert at original position
+          if (idx !== -1) this.segmentos.splice(idx, 0, segmento);
+          this.notificationService.showError(err.error?.message ?? 'Error al eliminar');
+        }
+      });
     });
   }
 
   crearPregunta(segmento: Segmento): void {
     const dialogRef = this.dialog.open(PreguntaDialogComponent, {
       width: '700px',
-      data: { segmentoId: segmento.id }
+      data: { segmentoId: segmento.id, ptsDisponibles: this.ptsRestantes(segmento), segmentoNombre: segmento.nombre }
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
+        this.hasChanges = true;
         this.cargarSegmentos();
       }
     });
   }
 
   editarPregunta(segmento: Segmento, pregunta: Pregunta): void {
+    // When editing, available = remaining + what this question already uses
+    const disponibles = this.ptsRestantes(segmento) + this.ptsDePregunta(pregunta);
     const dialogRef = this.dialog.open(PreguntaDialogComponent, {
       width: '700px',
-      data: { pregunta, segmentoId: segmento.id }
+      data: { pregunta, segmentoId: segmento.id, ptsDisponibles: disponibles, segmentoNombre: segmento.nombre }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.cargarSegmentos();
+    dialogRef.afterClosed().subscribe((result: Pregunta | undefined) => {
+      if (!result) return;
+      this.hasChanges = true;
+      // Apply changes instantly to the local object — no full reload needed
+      const idx = segmento.preguntas?.findIndex(p => p.id === result.id) ?? -1;
+      if (idx !== -1) {
+        segmento.preguntas![idx] = result;
       }
     });
   }
 
   eliminarPregunta(segmento: Segmento, pregunta: Pregunta): void {
-    if (!confirm(`¿Eliminar la pregunta "${pregunta.texto}"?`)) return;
-
-    this.preguntaService.deletePregunta(pregunta.id).subscribe({
-      next: () => {
-        this.notificationService.showSuccess('Pregunta eliminada');
-        this.cargarSegmentos();
-      },
-      error: (err) => {
-        this.notificationService.showError(err.error?.message ?? 'Error al eliminar');
+    this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Eliminar pregunta',
+        message: `¿Eliminar la pregunta "${pregunta.texto}"?`,
+        confirmText: 'Eliminar',
       }
+    }).afterClosed().subscribe(confirmed => {
+      if (!confirmed) return;
+      // Optimistic: remove immediately from local array
+      const idx = segmento.preguntas?.findIndex(p => p.id === pregunta.id) ?? -1;
+      if (idx !== -1) segmento.preguntas!.splice(idx, 1);
+      this.preguntaService.deletePregunta(pregunta.id).subscribe({
+        next: () => {
+          this.hasChanges = true;
+          this.notificationService.showSuccess('Pregunta eliminada');
+        },
+        error: (err) => {
+          // Rollback: re-insert the question at its original position
+          if (idx !== -1) segmento.preguntas!.splice(idx, 0, pregunta);
+          this.notificationService.showError(err.error?.message ?? 'Error al eliminar');
+        }
+      });
     });
   }
 
   distribuirPesos(): void {
-    if (!this.segmentos.length) return;
-    
-    // Distribuir sobre el primer segmento como ejemplo
-    this.segmentoService.distribuirPesos(this.segmentos[0].id).subscribe({
+    const conPreguntas = this.segmentos.filter(s => s.preguntas && s.preguntas.length > 0);
+    if (!conPreguntas.length) {
+      this.notificationService.showError('No hay preguntas en los segmentos para distribuir');
+      return;
+    }
+    forkJoin(conPreguntas.map(s => this.segmentoService.distribuirPesos(s.id))).subscribe({
       next: () => {
-        this.notificationService.showSuccess('Pesos distribuidos equitativamente');
+        this.notificationService.showSuccess('Pesos distribuidos equitativamente en todos los segmentos');
         this.cargarSegmentos();
       },
       error: (err) => {
@@ -445,11 +272,181 @@ export class BoletaEstructuraComponent implements OnInit {
     });
   }
 
+  // ── Expand / collapse ─────────────────────────────────────
+  toggleSegmento(index: number): void {
+    if (this.expandedSegments.has(index)) {
+      this.expandedSegments.delete(index);
+    } else {
+      this.expandedSegments.add(index);
+    }
+  }
+
+  // ── Publish draft version ──────────────────────────────────
+  publicarVersion(): void {
+    if (!this.versionBorradorId) return;
+    this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Publicar versión borrador',
+        message: `¿Publicar esta versión como la activa? La versión actual quedará desactivada (sus evaluaciones se conservan intactas).`,
+        confirmText: 'Publicar',
+      }
+    }).afterClosed().subscribe(confirmed => {
+      if (!confirmed) return;
+      this.publicando = true;
+      this.boletaService.publicarVersionBorrador(this.boletaId, this.versionBorradorId!).subscribe({
+        next: () => {
+          this.notificationService.showSuccess('Versión publicada correctamente. Es ahora la versión activa.');
+          // Reset draft state in-place (router reuses component on same route)
+          this.versionBorradorId = null;
+          this.publicando = false;
+          // Remove ?borrador from URL without navigation
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: {},
+            replaceUrl: true,
+          });
+          this.cargarDatos(); // reload fresh data without borrador
+        },
+        error: (err) => {
+          this.notificationService.showError(err.error?.message ?? 'Error al publicar');
+          this.publicando = false;
+        }
+      });
+    });
+  }
+
+  // ── Drag-and-drop ─────────────────────────────────────────
+  onDropSegmento(event: CdkDragDrop<Segmento[]>): void {
+    if (event.previousIndex === event.currentIndex) return;
+    this.hasChanges = true;
+    moveItemInArray(this.segmentos, event.previousIndex, event.currentIndex);
+    const updates = this.segmentos.map((s, i) =>
+      this.segmentoService.updateSegmento(s.id, { nombre: s.nombre, tipo: s.tipo, peso: s.peso ?? undefined, penalizacion: s.penalizacion ?? undefined, orden: i + 1 })
+    );
+    forkJoin(updates).subscribe({
+      error: () => this.notificationService.showError('Error al guardar el nuevo orden')
+    });
+  }
+
+  onDropPregunta(segmento: Segmento, event: CdkDragDrop<Pregunta[]>): void {
+    if (event.previousIndex === event.currentIndex || !segmento.preguntas) return;
+    this.hasChanges = true;
+    moveItemInArray(segmento.preguntas, event.previousIndex, event.currentIndex);
+    const updates = segmento.preguntas.map((p, i) =>
+      this.preguntaService.updatePregunta(p.id, { texto: p.texto, tipo: p.tipo, peso: p.peso ?? undefined, anula_segmento: p.anula_segmento, comentario_requerido: p.comentario_requerido, orden: i + 1 })
+    );
+    forkJoin(updates).subscribe({
+      error: () => this.notificationService.showError('Error al guardar el nuevo orden')
+    });
+  }
+
+  // ── Convenience aliases for external template ─────────────
+  crearPreguntaEnSegmento(segmento: Segmento): void {
+    this.crearPregunta(segmento);
+  }
+
+  /**
+   * QUICK ADD — creates the question immediately with smart defaults.
+   * Pushes directly into local array so UI updates instantly (no full reload).
+   */
+  crearPreguntaTipo(segmento: Segmento, tipo: string): void {
+    if (!this.canEdit) return;
+
+    const defaultsByTipo: Record<string, { texto: string; opciones: { texto: string; valor: number; orden: number }[] }> = {
+      si_no:           { texto: 'Nueva pregunta',           opciones: [{ texto: 'Sí', valor: 1, orden: 1 }, { texto: 'No', valor: 0, orden: 2 }] },
+      opcion_multiple: { texto: 'Nueva opción múltiple',    opciones: [{ texto: 'Opción A', valor: 1, orden: 1 }, { texto: 'Opción B', valor: 0, orden: 2 }] },
+      porcentaje:      { texto: 'Puntuación (0–100%)',      opciones: [] },
+      numerica:        { texto: 'Valor numérico',           opciones: [] },
+      checklist:       { texto: 'Nueva checklist',          opciones: [{ texto: 'Criterio A', valor: 1, orden: 1 }, { texto: 'Criterio B', valor: 1, orden: 2 }] },
+      texto_libre:     { texto: 'Comentario / observación', opciones: [] },
+    };
+
+    const def = defaultsByTipo[tipo] ?? { texto: 'Nueva pregunta', opciones: [] };
+    // Block if segment is full and tipo costs pts
+    if (this.tipoCostaPuntos(tipo) && this.segmentoLleno(segmento)) {
+      this.notificationService.showError(
+        `El segmento ya usa todos sus pts (${this.segmentoPts(segmento)} pts). Solo puedes agregar "Texto libre".`
+      );
+      return;
+    }
+
+    const key = tipo + '-' + segmento.id;
+    this.creatingTipo = key;
+
+    this.preguntaService.createPregunta(segmento.id, {
+      texto: def.texto,
+      tipo: tipo as any,
+      comentario_requerido: 'nunca' as any,
+      opciones: def.opciones,
+    }).subscribe({
+      next: (created) => {
+        this.creatingTipo = null;
+        this.hasChanges = true;
+        // Push directly — no full reload, segment stays expanded
+        if (!segmento.preguntas) segmento.preguntas = [];
+        segmento.preguntas.push(created);
+      },
+      error: (err) => {
+        this.creatingTipo = null;
+        this.notificationService.showError(err.error?.message ?? 'Error al crear pregunta');
+      }
+    });
+  }
+
   sumaPesos(): number {
-    return this.segmentos.reduce((sum, s) => sum + Number(s.peso), 0);
+    return this.segmentos.reduce((sum, s) => sum + Number(s.peso ?? 0), 0);
+  }
+
+  /** % weight still available for new segments (0 when full). */
+  pesoRestante(): number {
+    return Math.max(0, Math.round((100 - this.sumaPesos()) * 100) / 100);
+  }
+
+  // ── Pts capacity ─────────────────────────────────────────────
+  /** Max pts the segment contributes to the boleta total. null for critico/resumen. */
+  segmentoPts(seg: Segmento): number | null {
+    if (seg.tipo !== 'normal' || seg.peso == null) return null;
+    return Math.round((this.boleta?.total_global ?? 100) * seg.peso / 100 * 100) / 100;
+  }
+
+  /** Max pts a single question can contribute (max opcion.valor or pregunta.peso). */
+  ptsDePregunta(p: Pregunta): number {
+    if (p.peso != null) return Number(p.peso);
+    if (p.opciones?.length) return Math.max(...p.opciones.map(o => Number(o.valor)));
+    return 0;
+  }
+
+  /** Sum of pts already assigned to questions in the segment. */
+  ptsUsados(seg: Segmento): number {
+    return (seg.preguntas ?? []).reduce((sum, p) => sum + this.ptsDePregunta(p), 0);
+  }
+
+  /** Remaining pts available in this segment. */
+  ptsRestantes(seg: Segmento): number {
+    const total = this.segmentoPts(seg);
+    if (total == null) return Infinity;
+    return Math.max(0, Math.round((total - this.ptsUsados(seg)) * 100) / 100);
+  }
+
+  /** True when the segment has no more pts capacity for scored questions. */
+  segmentoLleno(seg: Segmento): boolean {
+    return seg.tipo === 'normal' && this.ptsRestantes(seg) === 0 && (this.segmentoPts(seg) ?? 0) > 0;
+  }
+
+  /** Only texto_libre has no pts. */
+  tipoCostaPuntos(tipo: string): boolean {
+    return tipo !== 'texto_libre';
   }
 
   volver(): void {
-    this.router.navigate(['/boletas']);
+    if (this.esBorrador && !this.hasChanges && this.versionBorradorId) {
+      // Discard the clone silently — no changes were made
+      this.boletaService.descartarBorrador(this.boletaId, this.versionBorradorId).subscribe({
+        next:  () => this.router.navigate(['/boletas']),
+        error: () => this.router.navigate(['/boletas']),
+      });
+    } else {
+      this.router.navigate(['/boletas']);
+    }
   }
 }

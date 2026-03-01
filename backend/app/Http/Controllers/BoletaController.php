@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\EstadoBoleta;
 use App\Models\Boleta;
+use App\Models\BoletaVersion;
 use App\Http\Requests\StoreBoletaRequest;
 use App\Http\Requests\UpdateBoletaRequest;
 use App\Http\Resources\BoletaResource;
@@ -25,7 +26,10 @@ class BoletaController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Boleta::with('creador')
+        $query = Boleta::with([
+                'creador',
+                'versiones' => fn($q) => $q->select('id', 'boleta_id', 'numero_version', 'es_activa')->orderByDesc('numero_version'),
+            ])
             ->withCount('versiones');
 
         if ($request->filled('estado')) {
@@ -203,6 +207,78 @@ class BoletaController extends Controller
         return response()->json([
             'data'    => new BoletaResource($boleta),
             'message' => 'Boleta archivada correctamente',
+        ]);
+    }
+
+    /**
+     * POST /boletas/{id}/publicar-borrador/{versionId}
+     * Activa una versión borrador como la nueva versión activa de la boleta.
+     * La versión activa anterior queda desactivada (sus evaluaciones se conservan).
+     */
+    public function publicarBorrador(string $id, string $versionId): JsonResponse
+    {
+        $boleta  = Boleta::findOrFail($id);
+        $version = BoletaVersion::where('boleta_id', $id)->where('id', $versionId)->firstOrFail();
+
+        if ($version->es_activa) {
+            return response()->json(['message' => 'Esta versión ya es la activa'], 422);
+        }
+
+        $this->versionamientoService->activarVersion($version);
+
+        return response()->json([
+            'data'    => new BoletaResource($boleta->fresh()),
+            'message' => "Versión {$version->numero_version} publicada. Es ahora la versión activa.",
+        ]);
+    }
+
+    /**
+     * DELETE /boletas/{id}/borrador/{versionId}
+     * Descarta una versión borrador (no activa) y todo su contenido.
+     */
+    public function descartarBorrador(string $id, string $versionId): JsonResponse
+    {
+        $boleta  = Boleta::findOrFail($id);
+        $version = BoletaVersion::where('boleta_id', $id)->where('id', $versionId)->firstOrFail();
+
+        if ($version->es_activa) {
+            return response()->json(['message' => 'No se puede descartar la versión activa'], 422);
+        }
+
+        \DB::transaction(function () use ($version) {
+            foreach ($version->segmentos()->with('preguntas.opciones')->get() as $segmento) {
+                foreach ($segmento->preguntas as $pregunta) {
+                    $pregunta->opciones()->delete();
+                    $pregunta->delete();
+                }
+                $segmento->delete();
+            }
+            $version->delete();
+        });
+
+        return response()->json(['message' => 'Borrador descartado correctamente']);
+    }
+
+    /**
+     * POST /boletas/{id}/reactivar
+     * Reactiva una boleta archivada → la vuelve a estado activa.
+     */
+    public function reactivar(string $id): JsonResponse
+    {
+        $boleta = Boleta::findOrFail($id);
+
+        if ($boleta->estado !== EstadoBoleta::Archivada) {
+            return response()->json([
+                'message'       => 'Solo se pueden reactivar boletas archivadas',
+                'estado_actual' => $boleta->estado->value,
+            ], 422);
+        }
+
+        $boleta->update(['estado' => EstadoBoleta::Activa]);
+
+        return response()->json([
+            'data'    => new BoletaResource($boleta),
+            'message' => 'Boleta reactivada. Ya está disponible para nuevas evaluaciones.',
         ]);
     }
 

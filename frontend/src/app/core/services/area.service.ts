@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Area } from '../models/boleta.model';
@@ -11,11 +11,8 @@ export class AreaService {
   constructor(private http: HttpClient) {}
 
   getAreas(soloActivas = false): Observable<Area[]> {
-    let params = undefined;
-    if (soloActivas) {
-      // Usar HttpParams para evitar error de tipo
-      params = new (require('@angular/common/http').HttpParams)().set('activa', '1');
-    }
+    // HttpParams es inmutable: cada .set() devuelve una NUEVA instancia
+    const params = soloActivas ? new HttpParams().set('activa', '1') : undefined;
     return this.http.get<{ data: Area[] }>(this.api, { params }).pipe(
       map(r => r.data)
     );

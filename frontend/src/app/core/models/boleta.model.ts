@@ -26,6 +26,7 @@ export interface Boleta {
   puede_evaluarse:  boolean;
   created_by:       number;
   versiones_count?: number;
+  borrador_version_id?: number | null;
   creador?:         { id: number; name: string };
   versiones?:       BoletaVersion[];
   version_activa?:  BoletaVersion;
@@ -126,6 +127,7 @@ export interface CreateSegmentoDto {
   tipo:        TipoSegmento;
   peso?:       number;
   penalizacion?: number;
+  orden?:      number;
 }
 
 export interface CreatePreguntaDto {
@@ -134,6 +136,7 @@ export interface CreatePreguntaDto {
   peso?:                number;
   anula_segmento?:      boolean;
   comentario_requerido?: ComentarioRequerido;
+  orden?:               number;
   opciones?:            { texto: string; valor: number; orden?: number }[];
 }
 

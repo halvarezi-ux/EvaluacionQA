@@ -1,97 +1,156 @@
-/* You can add global styles to this file, and also import other style files */
+/* =======================================================
+   EvaluaciónQA — Global Design System (Light Theme)
+   ======================================================= */
 
-/* ========================================== */
-/* EvaluaciónQA Design System Variables      */
-/* ========================================== */
-:root {
-  /* Brand Colors */
-  --primary-500: #3B82F6;
-  --primary-600: #2563EB;
-  --primary-700: #1E40AF;
-  --primary-rgb: 37, 99, 235;
+/* Angular CDK */
+@import '@angular/cdk/overlay-prebuilt.css';
 
-  /* Backgrounds */
-  --bg-base: #0B1220;
-  --bg-card: #111827;
-  --bg-section: #0F172A;
-
-  /* Borders */
-  --border-soft: rgba(255,255,255,0.06);
-
-  /* Text */
-  --text-primary: #E5E7EB;
-  --text-secondary: #9CA3AF;
-  --text-muted: #6B7280;
-
-  /* States */
-  --danger: #EF4444;
-  --success: #22C55E;
+/* CDK Drag-Drop global */
+.cdk-drag-preview {
+  box-shadow: 0 8px 32px rgba(79, 70, 229, 0.18);
+  border-radius: 12px;
+  opacity: 0.95;
+}
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+.cdk-drop-list-dragging .cdk-drag:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
 
-/* Box-sizing reset para consistencia */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
-
-/* Global Typography */
-body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  line-height: 1.6;
-}
+/* 1. Reset */
+*, *::before, *::after { box-sizing: border-box; }
 
 html, body { height: 100%; }
-body { margin: 0; }
+body { margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; line-height: 1.6; }
 
-/* Snackbar custom styles */
+/* 2. Root design tokens */
+:root {
+  /* Brand — Indigo */
+  --brand-50:  #EEF2FF;
+  --brand-100: #E0E7FF;
+  --brand-200: #C7D2FE;
+  --brand-300: #A5B4FC;
+  --brand-400: #818CF8;
+  --brand-500: #6366F1;
+  --brand-600: #4F46E5;
+  --brand-700: #4338CA;
+  --brand-800: #3730A3;
+  --brand-900: #312E81;
+
+  /* Semantic aliases */
+  --brand:       var(--brand-600);
+  --brand-light: var(--brand-400);
+  --brand-dark:  var(--brand-800);
+
+  /* Surfaces */
+  --surface: #F5F7FF;
+  --card:    #FFFFFF;
+  --border:  #E0E7FF;
+
+  /* Text */
+  --text-primary:   #1E1B4B;
+  --text-secondary: #6B7280;
+  --text-muted:     #9CA3AF;
+
+  /* State colors */
+  --success:        #10B981;
+  --success-bg:     #ECFDF5;
+  --success-border: #6EE7B7;
+  --warning:        #F59E0B;
+  --warning-bg:     #FFFBEB;
+  --warning-border: #FDE68A;
+  --danger:         #EF4444;
+  --danger-bg:      #FEF2F2;
+  --danger-border:  #FECACA;
+  --info:           #3B82F6;
+  --info-bg:        #EFF6FF;
+  --info-border:    #BFDBFE;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(79,70,229,.05);
+  --shadow-sm: 0 1px 3px rgba(79,70,229,.06), 0 4px 16px rgba(79,70,229,.06);
+  --shadow-md: 0 4px 24px rgba(79,70,229,.12);
+  --shadow-lg: 0 8px 40px rgba(79,70,229,.18);
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* Layout */
+  --sidenav-width:   256px;
+  --toolbar-height:  64px;
+}
+
+/* 3. Material table full-width */
+.mat-mdc-table { width: 100%; }
+
+/* 4. Snackbar overrides */
 .success-snackbar {
-  background-color: #4caf50 !important;
-  color: white !important;
-  
-  .mat-mdc-button {
-    color: white !important;
-  }
+  background-color: #4caf50 !important; color: white !important;
+  .mat-mdc-button { color: white !important; }
 }
-
 .error-snackbar {
-  background-color: #f44336 !important;
-  color: white !important;
-  
-  .mat-mdc-button {
-    color: white !important;
-  }
+  background-color: #f44336 !important; color: white !important;
+  .mat-mdc-button { color: white !important; }
 }
-
 .info-snackbar {
-  background-color: #2196f3 !important;
-  color: white !important;
-  
-  .mat-mdc-button {
-    color: white !important;
-  }
+  background-color: #2196f3 !important; color: white !important;
+  .mat-mdc-button { color: white !important; }
 }
 
-/* Material table improvements */
-.mat-mdc-table {
-  width: 100%;
-}
-
-/* Smooth transitions */
-* {
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-/* Route transitions - Smooth fade */
-router-outlet + * {
-  animation: routeFade 400ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
+/* 5. Route transition */
+router-outlet + * { animation: routeFade 280ms cubic-bezier(0.16, 1, 0.3, 1) both; }
 @keyframes routeFade {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* 6. Shared status chips */
+.qa-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 12px; font-weight: 600; letter-spacing: .2px;
+  white-space: nowrap;
+
+  &::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  &.draft      { background: #FEF3C7; color: #92400E;  &::before { background: #F59E0B; } }
+  &.activa     { background: #D1FAE5; color: #064E3B;  &::before { background: #10B981; } }
+  &.archivada  { background: #F3F4F6; color: #374151;  &::before { background: #9CA3AF; } }
+  &.borrador   { background: #FEF3C7; color: #92400E;  &::before { background: #F59E0B; } }
+  &.completada { background: #D1FAE5; color: #064E3B;  &::before { background: #10B981; } }
+}
+
+/* 7. Shared nivel chips (evaluation quality) */
+.nivel-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 12px; font-weight: 600;
+
+  &.excelente { background: #D1FAE5; color: #064E3B; }
+  &.bueno     { background: #DBEAFE; color: #1E3A8A; }
+  &.regular   { background: #FEF3C7; color: #92400E; }
+  &.critico   { background: #FEE2E2; color: #7F1D1D; }
+}
+
+/* 8. Shared page-header pattern */
+.qa-page-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 24px 28px 0;
+
+  .back-btn {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(79,70,229,.08); border: 1px solid rgba(79,70,229,.15);
+    color: var(--brand); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s, transform .12s;
+    &:hover { background: rgba(79,70,229,.15); transform: translateX(-2px); }
   }
+
+  h1 { margin: 0; font-size: 22px; font-weight: 700; color: var(--text-primary); }
+  .breadcrumb { font-size: 12px; color: var(--text-secondary); }
 }

@@ -33,9 +33,9 @@
         <mat-label>Estado</mat-label>
         <mat-select [(ngModel)]="filtroEstado" (selectionChange)="applyFiltros()">
           <mat-option value="">Todos</mat-option>
-          <mat-option value="borrador">Borrador</mat-option>
-          <mat-option value="publicada">Publicada</mat-option>
-          <mat-option value="inactiva">Inactiva</mat-option>
+          <mat-option value="draft">Borrador</mat-option>
+          <mat-option value="activa">Activa</mat-option>
+          <mat-option value="archivada">Archivada</mat-option>
         </mat-select>
       </mat-form-field>
 
@@ -104,7 +104,7 @@
       <ng-container matColumnDef="estado">
         <th mat-header-cell *matHeaderCellDef>Estado</th>
         <td mat-cell *matCellDef="let b">
-          <span class="estado-chip estado-{{ b.estado }}">{{ b.estado }}</span>
+          <span class="estado-chip estado-{{ b.estado }}">{{ b.estado_label || b.estado }}</span>
         </td>
       </ng-container>
 
@@ -120,9 +120,24 @@
           </button>
 
           <button mat-icon-button class="action-btn" style="color:#8B5CF6"
-                  matTooltip="Editar estructura (segmentos y preguntas)"
+                  matTooltip="Editar estructura (segmentos y preguntas)" *ngIf="b.estado === 'borrador' || b.estado === 'draft'"
                   (click)="editarEstructura(b)">
             <mat-icon>schema</mat-icon>
+          </button>
+
+          <!-- Clonar: solo cuando está activa (publicada en producción) y NO hay borrador pendiente -->
+          <button mat-icon-button class="action-btn" style="color:#8B5CF6"
+                  matTooltip="Clonar para editar (crea borrador sin afectar evaluaciones en curso)"
+                  *ngIf="b.estado === 'activa' && !b.borrador_version_id"
+                  (click)="clonarYEditar(b)">
+            <mat-icon>content_copy</mat-icon>
+          </button>
+
+          <!-- Editar borrador existente -->
+          <button mat-icon-button class="action-btn" style="color:#F59E0B"
+                  matTooltip="Editar borrador pendiente (versión sin publicar)" *ngIf="b.borrador_version_id"
+                  (click)="editarBorrador(b)">
+            <mat-icon>edit_note</mat-icon>
           </button>
 
           <button mat-icon-button class="action-btn" style="color:#6B7280"
@@ -141,6 +156,12 @@
                   matTooltip="Archivar" *ngIf="b.estado === 'publicada' || b.estado === 'activa'"
                   (click)="inactivarBoleta(b)">
             <mat-icon>pause_circle</mat-icon>
+          </button>
+
+          <button mat-icon-button class="action-btn" style="color:#10B981"
+                  matTooltip="Reactivar boleta" *ngIf="b.estado === 'archivada' || b.estado === 'inactiva'"
+                  (click)="reactivarBoleta(b)">
+            <mat-icon>play_circle</mat-icon>
           </button>
 
           <button mat-icon-button class="action-btn" style="color:#EF4444"
@@ -165,5 +186,16 @@
       </tr>
     </table>
   </div>
+
+  <!-- Paginador -->
+  <mat-paginator class="paginador"
+    *ngIf="!isLoading && totalItems > perPage"
+    [length]="totalItems"
+    [pageSize]="perPage"
+    [pageIndex]="currentPage - 1"
+    [pageSizeOptions]="[10, 15, 25, 50]"
+    showFirstLastButtons
+    (page)="onPage($event)">
+  </mat-paginator>
 
 </div>

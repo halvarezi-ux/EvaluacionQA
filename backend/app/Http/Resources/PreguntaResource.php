@@ -13,12 +13,12 @@ class PreguntaResource extends JsonResource
             'id'                   => $this->id,
             'segmento_id'          => $this->segmento_id,
             'texto'                => $this->texto,
-            'tipo'                 => $this->tipo->value,
-            'tipo_label'           => $this->tipo->label(),
+            'tipo'                 => $this->tipo?->value,
+            'tipo_label'           => $this->tipo?->label(),
             'peso'                 => $this->peso !== null ? (float) $this->peso : null,
             'anula_segmento'       => $this->anula_segmento,
-            'comentario_requerido' => $this->comentario_requerido->value,
-            'comentario_requerido_label' => $this->comentario_requerido->label(),
+            'comentario_requerido' => $this->comentario_requerido?->value,
+            'comentario_requerido_label' => $this->comentario_requerido?->label(),
             'orden'                => $this->orden,
             'opciones'             => PreguntaOpcionResource::collection(
                                          $this->whenLoaded('opciones')

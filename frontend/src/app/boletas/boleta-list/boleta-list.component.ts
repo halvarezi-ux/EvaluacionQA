@@ -12,6 +12,7 @@ import { MatChipsModule }     from '@angular/material/chips';
 import { MatTooltipModule }   from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 
 import { BoletaService }          from '../../core/services/boleta.service';
 import { NotificationService }    from '../../shared/services/notification.service';
@@ -26,6 +27,7 @@ import { Boleta }                 from '../../core/models/boleta.model';
     MatTableModule, MatButtonModule, MatIconModule,
     MatFormFieldModule, MatInputModule, MatSelectModule,
     MatChipsModule, MatTooltipModule, MatProgressSpinnerModule, MatDialogModule,
+    MatPaginatorModule,
   ],
   templateUrl: './boleta-list.component.html',
   styleUrls:   ['./boleta-list.component.css'],
@@ -35,6 +37,7 @@ export class BoletaListComponent implements OnInit {
   isLoading    = false;
   totalItems   = 0;
   currentPage  = 1;
+  perPage      = 15;
 
   busqueda     = '';
   filtroEstado = '';
@@ -53,7 +56,7 @@ export class BoletaListComponent implements OnInit {
 
   loadBoletas(): void {
     this.isLoading = true;
-    const filtros: Record<string, any> = { page: this.currentPage };
+    const filtros: Record<string, any> = { page: this.currentPage, per_page: this.perPage };
     if (this.busqueda)     filtros['busqueda']         = this.busqueda;
     if (this.filtroEstado) filtros['estado']            = this.filtroEstado;
     if (this.filtroTipo)   filtros['tipo_interaccion']  = this.filtroTipo;
@@ -72,6 +75,12 @@ export class BoletaListComponent implements OnInit {
   }
 
   applyFiltros(): void { this.currentPage = 1; this.loadBoletas(); }
+
+  onPage(e: PageEvent): void {
+    this.currentPage = e.pageIndex + 1;
+    this.perPage     = e.pageSize;
+    this.loadBoletas();
+  }
   clearFiltros(): void {
     this.busqueda = ''; this.filtroEstado = ''; this.filtroTipo = '';
     this.applyFiltros();
@@ -80,6 +89,25 @@ export class BoletaListComponent implements OnInit {
   crearBoleta(): void         { this.router.navigate(['/boletas/nueva']); }
   editarBoleta(b: Boleta): void { this.router.navigate(['/boletas/editar', b.id]); }
   editarEstructura(b: Boleta): void { this.router.navigate(['/boletas', b.id, 'estructura']); }
+
+  clonarYEditar(b: Boleta): void {
+    this.boletaService.clonarVersion(b.id).subscribe({
+      next: (boleta) => {
+        const borrador = boleta.borrador_version_id;
+        this.notificationService.showSuccess('Versión clonada. Puedes editarla sin afectar las evaluaciones activas.');
+        this.router.navigate(['/boletas', b.id, 'estructura'], {
+          queryParams: borrador ? { borrador } : {}
+        });
+      },
+      error: err => this.notificationService.showError(err.error?.message ?? 'Error al clonar'),
+    });
+  }
+
+  editarBorrador(b: Boleta): void {
+    this.router.navigate(['/boletas', b.id, 'estructura'], {
+      queryParams: { borrador: b.borrador_version_id }
+    });
+  }
 
   publicarBoleta(b: Boleta): void {
     this.confirm(
@@ -96,11 +124,25 @@ export class BoletaListComponent implements OnInit {
   }
 
   inactivarBoleta(b: Boleta): void {
-    this.confirm('Archivar boleta', `¿Archivar "${b.nombre}"?`, 'Archivar').then(ok => {
+    this.confirm('Archivar boleta', `¿Archivar "${b.nombre}"? Ya no estará disponible para nuevas evaluaciones.`, 'Archivar').then(ok => {
       if (!ok) return;
       this.boletaService.archivarBoleta(b.id).subscribe({
         next: () => { this.notificationService.showSuccess('Boleta archivada'); this.loadBoletas(); },
         error: err => this.notificationService.showError(err.error?.message ?? 'Error'),
+      });
+    });
+  }
+
+  reactivarBoleta(b: Boleta): void {
+    this.confirm(
+      'Reactivar boleta',
+      `¿Reactivar "${b.nombre}"? Volverá a estar disponible para nuevas evaluaciones.`,
+      'Reactivar',
+    ).then(ok => {
+      if (!ok) return;
+      this.boletaService.reactivarBoleta(b.id).subscribe({
+        next: () => { this.notificationService.showSuccess('Boleta reactivada'); this.loadBoletas(); },
+        error: err => this.notificationService.showError(err.error?.message ?? 'No se pudo reactivar'),
       });
     });
   }
