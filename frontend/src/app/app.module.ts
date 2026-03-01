@@ -27,6 +27,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatExpansionModule } from '@angular/material/expansion';
 
 // Importar el interceptor de autenticación
 import { AuthInterceptorService } from './auth/auth-interceptor.service';
@@ -60,7 +61,8 @@ import { AuthInterceptorService } from './auth/auth-interceptor.service';
   MatListModule,
   MatToolbarModule,
   MatTooltipModule,
-  MatDividerModule
+  MatDividerModule,
+  MatExpansionModule
 ],
   
   bootstrap: [AppComponent],

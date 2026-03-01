@@ -1,0 +1,139 @@
+<div class="eval-list-container">
+
+  <!-- ── Hero Header ─────────────────────────────────── -->
+  <div class="page-header">
+    <div class="header-left">
+      <div class="header-icon"><mat-icon>fact_check</mat-icon></div>
+      <div class="header-text">
+        <h1>Evaluaciones QA</h1>
+        <span class="header-subtitle">Historial de evaluaciones de calidad</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="total-badge" *ngIf="!isLoading">{{ totalItems }} registros</span>
+      <button mat-raised-button class="btn-nueva" (click)="nuevaEvaluacion()">
+        <mat-icon>add_circle_outline</mat-icon>
+        Nueva Evaluación
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Filtros ──────────────────────────────────────── -->
+  <div class="filtros-card">
+    <div class="filtros-bar">
+      <mat-form-field appearance="outline" class="filtro-agente">
+        <mat-label>Buscar agente</mat-label>
+        <input matInput [(ngModel)]="filtroAgenteNombre"
+               placeholder="Nombre del agente..."
+               (keyup.enter)="applyFiltros()">
+        <mat-icon matSuffix style="cursor:pointer;color:#4F46E5" (click)="applyFiltros()">search</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filtro-select">
+        <mat-label>Estado</mat-label>
+        <mat-select [(ngModel)]="filtroEstado" (selectionChange)="applyFiltros()">
+          <mat-option value="">Todos</mat-option>
+          <mat-option value="borrador">Borrador</mat-option>
+          <mat-option value="completada">Completada</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-stroked-button class="btn-limpiar"
+              *ngIf="hayFiltros()" (click)="clearFiltros()">
+        <mat-icon>clear</mat-icon> Limpiar
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Loading ──────────────────────────────────────── -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner [diameter]="44"></mat-spinner>
+    <span>Cargando evaluaciones...</span>
+  </div>
+
+  <!-- ── Tabla ────────────────────────────────────────── -->
+  <div class="table-container" *ngIf="!isLoading">
+    <table mat-table [dataSource]="evaluaciones" class="eval-table">
+
+      <!-- Agente -->
+      <ng-container matColumnDef="agente_nombre">
+        <th mat-header-cell *matHeaderCellDef>Agente evaluado</th>
+        <td mat-cell *matCellDef="let e">
+          <div class="agente-cell">
+            <div class="agente-avatar">{{ e.agente_nombre.charAt(0).toUpperCase() }}</div>
+            <div class="agente-info">
+              <span class="agente-nombre">{{ e.agente_nombre }}</span>
+            </div>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Área -->
+      <ng-container matColumnDef="area">
+        <th mat-header-cell *matHeaderCellDef>Área</th>
+        <td mat-cell *matCellDef="let e">
+          <span>{{ e.area?.nombre ?? '—' }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Nota Final -->
+      <ng-container matColumnDef="nota_final">
+        <th mat-header-cell *matHeaderCellDef>Nota Final</th>
+        <td mat-cell *matCellDef="let e">
+          <div class="score-cell">
+            <div class="score-bar-bg">
+              <div class="score-bar-fill"
+                   [style.width.%]="e.nota_final"
+                   [style.background]="scoreGradient(e.nota_final)">
+              </div>
+            </div>
+            <span class="score-value" [style.color]="e.nota_final >= 90 ? '#10B981' : e.nota_final >= 75 ? '#3B82F6' : e.nota_final >= 60 ? '#D97706' : '#EF4444'">
+              {{ e.nota_final }}%
+            </span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Nivel Calidad -->
+      <ng-container matColumnDef="nivel_calidad">
+        <th mat-header-cell *matHeaderCellDef>Nivel</th>
+        <td mat-cell *matCellDef="let e">
+          <span class="nivel-chip" [class]="nivelClass(e.nivel_calidad)">{{ e.nivel_calidad }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Estado -->
+      <ng-container matColumnDef="estado">
+        <th mat-header-cell *matHeaderCellDef>Estado</th>
+        <td mat-cell *matCellDef="let e">
+          <span class="estado-chip estado-{{ e.estado }}">{{ e.estado }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Acciones -->
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let e">
+          <button mat-icon-button class="action-btn" style="color:#4F46E5"
+                  matTooltip="Ver detalle" (click)="verDetalle(e)">
+            <mat-icon>open_in_new</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+      <tr class="mat-mdc-row" *matNoDataRow>
+        <td class="mat-mdc-cell" [attr.colspan]="displayedColumns.length">
+          <div class="no-data-state">
+            <mat-icon>search_off</mat-icon>
+            <h3>Sin evaluaciones</h3>
+            <p>No hay evaluaciones registradas con los filtros aplicados</p>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+</div>

@@ -64,7 +64,8 @@ class StoreUserRequest extends FormRequest
                 'required',
                 'string',
                 'min:6',
-                'max:255'
+                'max:255',
+                'confirmed'         // Requiere password_confirmation en el request
             ],
             'role_id' => [
                 'required',
@@ -99,6 +100,7 @@ class StoreUserRequest extends FormRequest
             
             'password.required' => 'La contraseña es obligatoria',
             'password.min' => 'La contraseña debe tener al menos 6 caracteres',
+            'password.confirmed' => 'Las contraseñas no coinciden',
             
             'role_id.required' => 'El rol es obligatorio',
             'role_id.exists' => 'El rol seleccionado no existe',

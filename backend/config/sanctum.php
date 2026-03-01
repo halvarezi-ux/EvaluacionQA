@@ -46,7 +46,7 @@ return [
     |
     */
 
-    'expiration' => null,
+    'expiration' => 480, // 8 horas — balance entre seguridad y UX para jornada laboral
 
     /*
     |--------------------------------------------------------------------------

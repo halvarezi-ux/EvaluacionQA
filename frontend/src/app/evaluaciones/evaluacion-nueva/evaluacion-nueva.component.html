@@ -1,0 +1,258 @@
+<div class="nueva-container" [formGroup]="metaForm">
+
+  <!-- ── Header ──────────────────────────────────────── -->
+  <div class="page-header">
+    <button class="back-btn" (click)="volver()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div class="header-text">
+      <h1>Nueva Evaluación</h1>
+      <span class="breadcrumb">Evaluaciones / Nueva</span>
+    </div>
+  </div>
+
+  <div class="content-grid">
+    <!-- ══════════════════════════════════════════════════
+         LEFT: Form
+    ═══════════════════════════════════════════════════ -->
+    <div class="form-panel">
+
+      <!-- Meta Card -->
+      <div class="card meta-card">
+        <div class="card-header-strip indigo">
+          <mat-icon>person_pin</mat-icon>
+          <span>Datos de la evaluación</span>
+        </div>
+        <div class="card-body">
+          <div class="field-row two">
+            <!-- Boleta -->
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>Boleta de evaluación</mat-label>
+              <mat-select formControlName="boleta_id"
+                          (selectionChange)="onBoletaChange($event.value)">
+                <mat-option *ngFor="let b of boletas" [value]="b.id">
+                  {{ b.nombre }} — {{ b.cliente }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix style="color:#4F46E5">description</mat-icon>
+              <mat-error *ngIf="hasError('boleta_id', 'required')">Selecciona una boleta</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="field-row two">
+            <!-- Agente -->
+            <mat-form-field appearance="outline">
+              <mat-label>Agente evaluado</mat-label>
+              <input matInput formControlName="agente_nombre" placeholder="Nombre del agente">
+              <mat-icon matPrefix style="color:#4F46E5">badge</mat-icon>
+              <mat-error *ngIf="hasError('agente_nombre', 'required')">Campo obligatorio</mat-error>
+              <mat-error *ngIf="hasError('agente_nombre', 'minlength')">Mínimo 2 caracteres</mat-error>
+            </mat-form-field>
+
+            <!-- Área -->
+            <mat-form-field appearance="outline">
+              <mat-label>Área (opcional)</mat-label>
+              <mat-select formControlName="area_id">
+                <mat-option [value]="null">Sin área</mat-option>
+                <mat-option *ngFor="let a of areas" [value]="a.id">{{ a.nombre }}</mat-option>
+              </mat-select>
+              <mat-icon matPrefix style="color:#9CA3AF">business</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="field-row">
+            <p style="color: #666; font-size: 13px; margin: 8px 0 0 0;">
+              Selecciona una boleta para cargar las preguntas
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading estructura -->
+      <div *ngIf="isLoadingEstr" class="loading-estr">
+        <mat-spinner [diameter]="36"></mat-spinner>
+        <span>Cargando preguntas de la boleta...</span>
+      </div>
+
+      <!-- ── Segmentos y Preguntas ───────────────────────── -->
+      <ng-container *ngIf="!isLoadingEstr && segmentos.length > 0" [formGroup]="metaForm">
+        <div class="progreso-bar-wrap">
+          <div class="progreso-labels">
+            <span>Progreso de evaluación</span>
+            <strong>{{ completadas }}/{{ totalPreguntas }} completadas</strong>
+          </div>
+          <div class="progreso-track">
+            <div class="progreso-fill" [style.width.%]="progresoPct"></div>
+          </div>
+        </div>
+
+        <mat-accordion>
+          <mat-expansion-panel *ngFor="let seg of segmentos; let si = index" [expanded]="si === 0">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <mat-icon>folder_open</mat-icon>
+                <span style="margin-left: 8px;">{{ seg.nombre }}</span>
+              </mat-panel-title>
+              <mat-panel-description>
+                {{ seg.preguntas.length }} preguntas | Peso: {{ seg.peso }}%
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+
+            <div class="preguntas-list" formArrayName="respuestas">
+              <div *ngFor="let pregunta of seg.preguntas; let pi = index" 
+                   [formGroupName]="getPreguntaFormIndex(pregunta.id)"
+                   class="pregunta-row">
+                
+                <div class="pregunta-left">
+                  <div class="pregunta-num">{{ pi + 1 }}</div>
+                  <div class="pregunta-texto-wrap">
+                    <p class="pregunta-texto">{{ pregunta.texto }}</p>
+                    <div class="pregunta-meta">
+                      <span class="peso-badge">Peso: {{ pregunta.peso }}%</span>
+                      <span class="tipo-badge">{{ pregunta.tipo_label }}</span>
+                      <span *ngIf="pregunta.anula_segmento" class="fatal-badge">
+                        <mat-icon style="font-size:12px;width:12px;height:12px">warning</mat-icon> Anula
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pregunta-widget">
+                  <!-- Respuesta según tipo -->
+                  <ng-container [ngSwitch]="pregunta.tipo">
+                    <!-- SI_NO -->
+                    <div *ngSwitchCase="'si_no'" class="opciones-btns">
+                      <button type="button" 
+                              *ngFor="let opc of pregunta.opciones"
+                              class="opcion-btn"
+                              [class.active]="getRespuestaValue(pregunta.id) === opc.texto"
+                              (click)="setRespuestaValue(pregunta.id, opc.texto)">
+                        {{ opc.texto }}
+                      </button>
+                    </div>
+
+                    <!-- OPCION_MULTIPLE -->
+                    <div *ngSwitchCase="'opcion_multiple'" class="opciones-select">
+                      <mat-select formControlName="respuesta_valor" placeholder="Selecciona una opción">
+                        <mat-option *ngFor="let opc of pregunta.opciones" [value]="opc.texto">
+                          {{ opc.texto }} ({{ opc.valor }} pts)
+                        </mat-option>
+                      </mat-select>
+                    </div>
+
+                    <!-- PORCENTAJE -->
+                    <div *ngSwitchCase="'porcentaje'" class="porcentaje-input">
+                      <mat-slider min="0" max="100" step="5" showTickMarks discrete>
+                        <input matSliderThumb formControlName="respuesta_valor">
+                      </mat-slider>
+                      <span class="valor-display">{{ getRespuestaValue(pregunta.id) || 0 }}%</span>
+                    </div>
+
+                    <!-- NUMERICA -->
+                    <div *ngSwitchCase="'numerica'" class="numerica-input">
+                      <input type="number" formControlName="respuesta_valor" placeholder="Ingresa un número">
+                    </div>
+
+                    <!-- CHECKLIST -->
+                    <div *ngSwitchCase="'checklist'" class="checklist-opciones">
+                      <button type="button"
+                              *ngFor="let opc of pregunta.opciones"
+                              class="check-item"
+                              [class.checked]="getRespuestaValue(pregunta.id) === opc.texto"
+                              (click)="setRespuestaValue(pregunta.id, opc.texto)">
+                        <mat-icon>{{ getRespuestaValue(pregunta.id) === opc.texto ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                        {{ opc.texto }}
+                      </button>
+                    </div>
+
+                    <!-- TEXTO_LIBRE -->
+                    <div *ngSwitchCase="'texto_libre'" class="texto-input">
+                      <textarea formControlName="respuesta_valor" 
+                                placeholder="Escribe tu respuesta..."
+                                rows="2"></textarea>
+                    </div>
+
+                    <!-- DEFAULT -->
+                    <div *ngSwitchDefault class="default-input">
+                      <input type="text" formControlName="respuesta_valor" placeholder="Respuesta">
+                    </div>
+                  </ng-container>
+
+                  <!-- Comentario -->
+                  <div class="comentario-field" *ngIf="comentarioRequerido(pregunta)">
+                    <textarea formControlName="comentario"
+                              placeholder="Comentario (requerido)"
+                              rows="1"></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </ng-container>
+
+      <!-- Placeholder boleta no seleccionada -->
+      <div *ngIf="!isLoadingEstr && segmentos.length === 0 && !metaForm.get('boleta_id')?.value"
+           class="no-boleta-state">
+        <mat-icon>assignment</mat-icon>
+        <p>Selecciona una boleta para cargar las preguntas de evaluación</p>
+      </div>
+
+      <!-- Guardar -->
+      <div class="form-actions" *ngIf="segmentos.length > 0">
+        <button mat-stroked-button (click)="volver()" class="btn-cancelar">Cancelar</button>
+        <button mat-raised-button class="btn-guardar"
+                [disabled]="metaForm.invalid || isSaving"
+                (click)="guardarEvaluacion()">
+          <mat-spinner *ngIf="isSaving" [diameter]="18"></mat-spinner>
+          <mat-icon *ngIf="!isSaving">save</mat-icon>
+          {{ isSaving ? 'Guardando...' : 'Guardar evaluación' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
+         RIGHT: Score widget sticky
+    ═══════════════════════════════════════════════════ -->
+    <div class="score-panel">
+      <div class="score-widget">
+        <!-- Ring -->
+        <div class="score-ring-wrap">
+          <svg viewBox="0 0 120 120" class="score-ring">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="#E8EAFF" stroke-width="12"/>
+            <circle cx="60" cy="60" r="52" fill="none"
+                    stroke="#4F46E5"
+                    stroke-width="12"
+                    stroke-linecap="round"
+                    stroke-dasharray="326.73"
+                    [attr.stroke-dashoffset]="326.73 - (326.73 * progresoPct / 100)"
+                    transform="rotate(-90 60 60)"
+                    style="transition: stroke-dashoffset .5s ease"/>
+          </svg>
+          <div class="score-center">
+            <span class="score-number">{{ progresoPct }}</span>
+            <span class="score-pct">%</span>
+          </div>
+        </div>
+
+        <div class="nivel-badge-wrap">
+          <span class="nivel-badge" style="background: #4F46E5">
+            Completitud
+          </span>
+        </div>
+
+        <div class="progreso-mini">
+          <span>{{ completadas }}/{{ totalPreguntas }} preguntas</span>
+          <div class="mini-bar"><div class="mini-fill" [style.width.%]="progresoPct"></div></div>
+        </div>
+
+        <div class="score-hints">
+          <p style="color: #666; font-size: 13px; margin: 8px 0 0 0; text-align: center;">
+            El backend calculará la nota final al guardar
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

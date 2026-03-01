@@ -6,6 +6,12 @@ import { LogoutComponent } from './auth/logout/logout.component';
 import { UserListComponent } from './usuarios/user-list/user-list.component';
 import { UserFormComponent } from './usuarios/user-form/user-form.component';
 import { ForbiddenComponent } from './shared/pages/forbidden/forbidden.component';
+import { BoletaListComponent } from './boletas/boleta-list/boleta-list.component';
+import { BoletaFormComponent } from './boletas/boleta-form/boleta-form.component';
+import { EvaluacionListComponent }    from './evaluaciones/evaluacion-list/evaluacion-list.component';
+import { EvaluacionNuevaComponent }   from './evaluaciones/evaluacion-nueva/evaluacion-nueva.component';
+import { EvaluacionDetalleComponent } from './evaluaciones/evaluacion-detalle/evaluacion-detalle.component';
+import { BoletaEstructuraComponent } from './boletas/boleta-estructura/boleta-estructura.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -53,6 +59,50 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
     data: { role: 'Analista' },
     loadComponent: () => import('./analista/analista.component').then(m => m.AnalistaComponent)
+  },
+  // Boletas — Admin y QA Lead
+  {
+    path: 'boletas',
+    component: BoletaListComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['Admin', 'QA Lead'] }
+  },
+  {
+    path: 'boletas/nueva',
+    component: BoletaFormComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['Admin', 'QA Lead'] }
+  },
+  {
+    path: 'boletas/editar/:id',
+    component: BoletaFormComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['Admin', 'QA Lead'] }
+  },
+  {
+    path: 'boletas/:id/estructura',
+    component: BoletaEstructuraComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['Admin', 'QA Lead'] }
+  },
+  // Evaluaciones — Admin, QA Lead y QA
+  {
+    path: 'evaluaciones',
+    component: EvaluacionListComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['Admin', 'QA Lead', 'QA'] }
+  },
+  {
+    path: 'evaluaciones/nueva',
+    component: EvaluacionNuevaComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['Admin', 'QA Lead', 'QA'] }
+  },
+  {
+    path: 'evaluaciones/:id',
+    component: EvaluacionDetalleComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['Admin', 'QA Lead', 'QA'] }
   },
   { path: '', redirectTo: 'login', pathMatch: 'full' }
 ];

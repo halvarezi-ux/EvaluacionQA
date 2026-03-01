@@ -146,7 +146,7 @@ export class LoginComponent {
 private redirectByRole(role: string): void {
   const roleRoutes: { [key: string]: string } = {
     'Admin': '/admin',
-    'QA Lead': '/dashboard',  // QA Lead no tiene componente aún, va a dashboard
+    'QA Lead': '/boletas',
     'QA': '/qa',
     'Analista': '/analista',
     'Asesor': '/dashboard'     // Asesor no tiene componente aún, va a dashboard

@@ -1,0 +1,141 @@
+﻿<div class="boleta-form-container">
+
+  <!-- Header banner -->
+  <div class="form-header">
+    <button mat-icon-button class="back-btn" (click)="volver()" matTooltip="Volver a boletas">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div class="header-info">
+      <h1>
+        <ng-container *ngIf="!isEditMode">Nueva Boleta</ng-container>
+        <ng-container *ngIf="isEditMode && !isReadOnly">Editar boleta</ng-container>
+        <ng-container *ngIf="isReadOnly">{{ boleta?.nombre }}</ng-container>
+      </h1>
+      <div class="header-breadcrumb">
+        <ng-container *ngIf="!isEditMode">Completa los datos y luego define la estructura</ng-container>
+        <ng-container *ngIf="isEditMode">{{ boleta?.cliente }} · {{ boleta?.pais }}</ng-container>
+      </div>
+    </div>
+    <span *ngIf="boleta" [class]="'estado-chip estado-' + boleta.estado">{{ boleta.estado }}</span>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner [diameter]="44"></mat-spinner>
+    <span>Cargando boleta...</span>
+  </div>
+
+  <div *ngIf="!isLoading" class="sections-layout">
+
+    <!-- DATOS GENERALES -->
+    <mat-card class="form-card">
+      <div class="card-header-strip"></div>
+      <mat-card-header>
+        <mat-icon mat-card-avatar>description</mat-icon>
+        <mat-card-title>Datos Generales</mat-card-title>
+        <mat-card-subtitle>Información base de la boleta</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="metaForm" class="meta-form">
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nombre de la boleta</mat-label>
+            <mat-icon matPrefix style="color:#4F46E5;margin-right:6px">badge</mat-icon>
+            <input matInput formControlName="nombre" placeholder="Ej: Boleta Atención Telefónica Banco">
+            <mat-error>Nombre requerido</mat-error>
+          </mat-form-field>
+
+          <div class="two-col">
+            <mat-form-field appearance="outline">
+              <mat-label>País</mat-label>
+              <mat-icon matPrefix style="color:#4F46E5;margin-right:6px">flag</mat-icon>
+              <input matInput formControlName="pais" placeholder="Ej: Colombia">
+              <mat-error>Requerido</mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Tipo de interacción</mat-label>
+              <mat-select formControlName="tipo_interaccion">
+                <mat-option value="llamada">📞 Llamada</mat-option>
+                <mat-option value="chat">💬 Chat</mat-option>
+                <mat-option value="email">✉️ Email</mat-option>
+              </mat-select>
+              <mat-error>Requerido</mat-error>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Cliente</mat-label>
+            <mat-icon matPrefix style="color:#4F46E5;margin-right:6px">business</mat-icon>
+            <input matInput formControlName="cliente" placeholder="Ej: Banco Central SA">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Descripción</mat-label>
+            <textarea matInput formControlName="descripcion" rows="3" 
+                      placeholder="Descripción de la boleta (opcional)"></textarea>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Total Global (puntos)</mat-label>
+            <input matInput type="number" formControlName="total_global" min="1" max="1000">
+            <mat-hint>Suma total de puntos de todos los segmentos</mat-hint>
+          </mat-form-field>
+
+        </form>
+      </mat-card-content>
+      <mat-card-actions align="end" *ngIf="!isReadOnly">
+        <button class="save-btn" mat-raised-button (click)="guardarMeta()" [disabled]="isSaving">
+          <mat-spinner *ngIf="isSaving" diameter="16" class="btn-spinner"></mat-spinner>
+          <mat-icon *ngIf="!isSaving">save</mat-icon>
+          {{ isSaving ? 'Guardando...' : (isEditMode ? 'Actualizar datos' : 'Crear boleta') }}
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <!-- ESTRUCTURA -->
+    <mat-card class="form-card" *ngIf="isEditMode">
+      <div class="card-header-strip green"></div>
+      <mat-card-header>
+        <mat-icon mat-card-avatar>schema</mat-icon>
+        <mat-card-title>Estructura de Evaluación</mat-card-title>
+        <mat-card-subtitle>Define segmentos, preguntas y opciones</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="estructura-info">
+          <p>La estructura de la boleta (segmentos y preguntas) se gestiona desde una interfaz dedicada.</p>
+          <button mat-raised-button color="primary" (click)="irAEstructura()">
+            <mat-icon>edit</mat-icon>
+            Editar Estructura
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- ACCIONES -->
+    <mat-card class="form-card" *ngIf="isEditMode && !isReadOnly">
+      <div class="card-header-strip orange"></div>
+      <mat-card-header>
+        <mat-icon mat-card-avatar>settings</mat-icon>
+        <mat-card-title>Acciones</mat-card-title>
+        <mat-card-subtitle>Gestionar estado de la boleta</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="acciones-grid">
+          <button mat-raised-button color="accent" 
+                  *ngIf="boleta?.estado === 'draft'"
+                  (click)="activar()">
+            <mat-icon>cloud_upload</mat-icon>
+            Activar Boleta
+          </button>
+          <button mat-raised-button 
+                  *ngIf="boleta?.estado === 'activa'"
+                  (click)="archivar()">
+            <mat-icon>archive</mat-icon>
+            Archivar Boleta
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+  </div>
+</div>

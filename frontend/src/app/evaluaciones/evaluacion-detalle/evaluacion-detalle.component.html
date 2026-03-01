@@ -1,0 +1,108 @@
+<div class="detalle-container">
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-state">
+    <mat-spinner [diameter]="48"></mat-spinner>
+    <span>Cargando evaluación...</span>
+  </div>
+
+  <ng-container *ngIf="!isLoading && evaluacion">
+    <!-- ── Header ──────────────────────────────────── -->
+    <div class="page-header">
+      <button class="back-btn" (click)="volver()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-text">
+        <h1>Detalle de Evaluación</h1>
+        <span class="breadcrumb">Evaluaciones / #{{ evaluacion.id }}</span>
+      </div>
+      <div class="header-actions">
+        <span class="estado-chip estado-{{ evaluacion.estado }}">{{ evaluacion.estado }}</span>
+      </div>
+    </div>
+
+    <!-- ── Summary Hero ────────────────────────────── -->
+    <div class="hero-summary">
+      <!-- Score -->
+      <div class="score-block">
+        <div class="score-ring-wrap">
+          <svg viewBox="0 0 120 120" class="score-ring">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="#E8EAFF" stroke-width="12"/>
+            <circle cx="60" cy="60" r="52" fill="none"
+                    [attr.stroke]="scoreColor(evaluacion.nota_final)"
+                    stroke-width="12"
+                    stroke-linecap="round"
+                    stroke-dasharray="326.73"
+                    [attr.stroke-dashoffset]="326.73 - (326.73 * evaluacion.nota_final / 100)"
+                    transform="rotate(-90 60 60)"/>
+          </svg>
+          <div class="score-center">
+            <span class="score-big" [style.color]="scoreColor(evaluacion.nota_final)">{{ evaluacion.nota_final }}</span>
+            <span class="score-pct">%</span>
+          </div>
+        </div>
+        <div class="nivel-row">
+          <span class="nivel-chip" [class]="nivelClass(evaluacion.nivel_calidad)">{{ evaluacion.nivel_calidad }}</span>
+        </div>
+      </div>
+
+      <!-- Meta info -->
+      <div class="meta-block">
+        <div class="meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">Agente evaluado</span>
+            <span class="meta-value">{{ evaluacion.agente_nombre }}</span>
+          </div>
+          <div class="meta-item" *ngIf="evaluacion.area">
+            <span class="meta-label">Área</span>
+            <span class="meta-value">{{ evaluacion.area?.nombre }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Fecha</span>
+            <span class="meta-value">{{ evaluacion.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Total Normal</span>
+            <span class="meta-value">{{ evaluacion.total_normal }}</span>
+          </div>
+          <div class="meta-item" *ngIf="evaluacion.total_penalizacion > 0">
+            <span class="meta-label">Penalización</span>
+            <span class="meta-value" style="color: #EF4444;">-{{ evaluacion.total_penalizacion }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Respuestas by segmento ────────────────────── -->
+    <div *ngFor="let seg of segmentos; let si = index" class="seccion-card">
+      <div class="sec-header" [class]="'color-' + (si % 4)">
+        <mat-icon>folder_open</mat-icon>
+        <span>{{ seg.nombre }}</span>
+        <span class="sec-count">{{ seg.respuestas.length }} preguntas</span>
+      </div>
+      <div class="criterios-table">
+        <div class="criterios-thead">
+          <span class="col-num">#</span>
+          <span class="col-texto">Pregunta</span>
+          <span class="col-valor">Respuesta</span>
+          <span class="col-peso">Puntos</span>
+          <span class="col-obs">Comentario</span>
+        </div>
+        <div *ngFor="let r of seg.respuestas; let ri = index" class="criterio-row">
+          <span class="col-num">
+            <span class="num-badge">{{ ri + 1 }}</span>
+          </span>
+          <span class="col-texto">
+            {{ r.pregunta?.texto || 'N/A' }}
+          </span>
+          <span class="col-valor">
+            <span class="valor-badge">{{ r.respuesta_valor }}</span>
+          </span>
+          <span class="col-peso">{{ r.puntaje_obtenido }}</span>
+          <span class="col-obs">{{ r.comentario || '—' }}</span>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+</div>

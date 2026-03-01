@@ -75,7 +75,8 @@ class UpdateUserRequest extends FormRequest
                 'sometimes',                // Password es opcional en updates
                 'string',
                 'min:6',
-                'max:255'
+                'max:255',
+                'confirmed'                 // Requiere password_confirmation si se envía password
             ],
             'role_id' => [
                 'sometimes',
@@ -107,6 +108,7 @@ class UpdateUserRequest extends FormRequest
             'email.unique' => 'Este email ya está registrado',
             
             'password.min' => 'La contraseña debe tener al menos 6 caracteres',
+            'password.confirmed' => 'Las contraseñas no coinciden',
             
             'role_id.exists' => 'El rol seleccionado no existe',
             

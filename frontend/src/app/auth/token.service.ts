@@ -66,4 +66,13 @@ export class TokenService {
   isAuthenticated(): boolean {
     return this.getToken() !== null;
   }
+
+  /**
+   * Limpia toda la sesión: token y usuario de ambos storages
+   * Usado por el interceptor cuando el servidor devuelve 401
+   */
+  clearAll(): void {
+    this.removeToken();
+    this.removeUser();
+  }
 }
