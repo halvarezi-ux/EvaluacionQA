@@ -19,6 +19,7 @@ class PreguntaResource extends JsonResource
             'anula_segmento'       => $this->anula_segmento,
             'comentario_requerido' => $this->comentario_requerido?->value,
             'comentario_requerido_label' => $this->comentario_requerido?->label(),
+            'max_selecciones'      => $this->max_selecciones ?? 1,
             'orden'                => $this->orden,
             'opciones'             => PreguntaOpcionResource::collection(
                                          $this->whenLoaded('opciones')

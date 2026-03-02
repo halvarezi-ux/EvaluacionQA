@@ -3,7 +3,7 @@ export type TipoInteraccion     = 'llamada' | 'chat' | 'email';
 export type EstadoBoleta        = 'draft' | 'activa' | 'archivada';
 export type TipoSegmento        = 'normal' | 'critico' | 'resumen';
 export type TipoPregunta        = 'si_no' | 'opcion_multiple' | 'porcentaje' | 'numerica' | 'checklist' | 'texto_libre';
-export type ComentarioRequerido = 'nunca' | 'siempre' | 'si_es_no' | 'si_es_si' | 'si_penaliza';
+export type ComentarioRequerido = 'nunca' | 'siempre' | 'si_es_no' | 'si_es_si' | 'si_penaliza' | 'si_puntaje_cero';
 
 // ─── Modelos principales ───────────────────────────────────────────────────────
 export interface Area {
@@ -68,6 +68,7 @@ export interface Pregunta {
   anula_segmento:       boolean;
   comentario_requerido: ComentarioRequerido;
   comentario_requerido_label: string;
+  max_selecciones:      number;
   orden:                number;
   opciones:             PreguntaOpcion[];
 }
@@ -136,6 +137,7 @@ export interface CreatePreguntaDto {
   peso?:                number;
   anula_segmento?:      boolean;
   comentario_requerido?: ComentarioRequerido;
+  max_selecciones?:     number;
   orden?:               number;
   opciones?:            { texto: string; valor: number; orden?: number }[];
 }

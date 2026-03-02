@@ -137,7 +137,7 @@ export class BoletaEstructuraComponent implements OnInit {
   crearSegmento(): void {
     const dialogRef = this.dialog.open(SegmentoDialogComponent, {
       width: '600px',
-      data: { versionId: this.versionActiva!.id, pesoRestante: this.pesoRestante() }
+      data: { versionId: this.versionActiva!.id, pesoRestante: this.pesoRestante(), totalGlobal: this.boleta?.total_global ?? 100 }
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -333,7 +333,18 @@ export class BoletaEstructuraComponent implements OnInit {
     this.hasChanges = true;
     moveItemInArray(segmento.preguntas, event.previousIndex, event.currentIndex);
     const updates = segmento.preguntas.map((p, i) =>
-      this.preguntaService.updatePregunta(p.id, { texto: p.texto, tipo: p.tipo, peso: p.peso ?? undefined, anula_segmento: p.anula_segmento, comentario_requerido: p.comentario_requerido, orden: i + 1 })
+      this.preguntaService.updatePregunta(p.id, {
+        texto: p.texto,
+        tipo: p.tipo,
+        peso: p.peso ?? undefined,
+        anula_segmento: p.anula_segmento,
+        comentario_requerido: p.comentario_requerido,
+        max_selecciones: p.max_selecciones ?? undefined,
+        orden: i + 1,
+        opciones: p.opciones?.length
+          ? p.opciones.map((o, oi) => ({ texto: o.texto, valor: o.valor, orden: oi + 1 }))
+          : undefined,
+      })
     );
     forkJoin(updates).subscribe({
       error: () => this.notificationService.showError('Error al guardar el nuevo orden')
@@ -354,7 +365,7 @@ export class BoletaEstructuraComponent implements OnInit {
 
     const defaultsByTipo: Record<string, { texto: string; opciones: { texto: string; valor: number; orden: number }[] }> = {
       si_no:           { texto: 'Nueva pregunta',           opciones: [{ texto: 'Sí', valor: 1, orden: 1 }, { texto: 'No', valor: 0, orden: 2 }] },
-      opcion_multiple: { texto: 'Nueva opción múltiple',    opciones: [{ texto: 'Opción A', valor: 1, orden: 1 }, { texto: 'Opción B', valor: 0, orden: 2 }] },
+      opcion_multiple: { texto: 'Nueva opción múltiple',    opciones: [{ texto: 'Opción A', valor: 0, orden: 1 }, { texto: 'Opción B', valor: 0, orden: 2 }] },
       porcentaje:      { texto: 'Puntuación (0–100%)',      opciones: [] },
       numerica:        { texto: 'Valor numérico',           opciones: [] },
       checklist:       { texto: 'Nueva checklist',          opciones: [{ texto: 'Criterio A', valor: 1, orden: 1 }, { texto: 'Criterio B', valor: 1, orden: 2 }] },
@@ -431,6 +442,14 @@ export class BoletaEstructuraComponent implements OnInit {
   /** True when the segment has no more pts capacity for scored questions. */
   segmentoLleno(seg: Segmento): boolean {
     return seg.tipo === 'normal' && this.ptsRestantes(seg) === 0 && (this.segmentoPts(seg) ?? 0) > 0;
+  }
+
+  /** Severity level of a crítico segment based on its penalización. */
+  criticoSeveridad(seg: Segmento): 'grave' | 'alto' | 'leve' | '' {
+    if (seg.tipo !== 'critico' || !seg.penalizacion) return '';
+    if (seg.penalizacion >= 91) return 'grave';
+    if (seg.penalizacion >= 50) return 'alto';
+    return 'leve';
   }
 
   /** Only texto_libre has no pts. */

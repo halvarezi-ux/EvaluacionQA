@@ -111,7 +111,10 @@
          cdkDrag
          class="segment-card"
          [class.segment-critico]="segmento.tipo === 'critico'"
-         [class.segment-resumen]="segmento.tipo === 'resumen'">
+         [class.segment-resumen]="segmento.tipo === 'resumen'"
+         [class.critico-grave]="criticoSeveridad(segmento) === 'grave'"
+         [class.critico-alto]="criticoSeveridad(segmento) === 'alto'"
+         [class.critico-leve]="criticoSeveridad(segmento) === 'leve'">
 
       <!-- Drag placeholder ghost -->
       <div class="drag-placeholder" *cdkDragPlaceholder></div>
@@ -127,13 +130,16 @@
         <div class="segment-title-block">
           <span class="segment-nombre">{{ segmento.nombre }}</span>
           <div class="segment-badges">
-            <span class="chip chip-tipo">{{ segmento.tipo_label }}</span>
+            <span class="chip chip-tipo"
+                  [ngClass]="segmento.tipo === 'critico' ? 'chip-critico-' + criticoSeveridad(segmento) : ''">{{ segmento.tipo_label }}</span>
             <span class="chip chip-peso" *ngIf="segmento.peso != null">
               {{ segmento.peso }}%
               <span class="chip-pts-sep">·</span>
               <strong>{{ segmentoPts(segmento) }} pts</strong>
             </span>
-            <span class="chip chip-pen" *ngIf="segmento.penalizacion">-{{ segmento.penalizacion }} pts pen.</span>
+            <span class="chip chip-pen"
+                  *ngIf="segmento.penalizacion"
+                  [ngClass]="'chip-critico-' + criticoSeveridad(segmento)">-{{ segmento.penalizacion }} pts pen.</span>
             <span class="chip chip-count">{{ segmento.preguntas?.length || 0 }} preg.</span>
             <!-- pts used indicator -->
             <span class="chip chip-pts-used" *ngIf="segmento.tipo === 'normal' && segmentoPts(segmento) as total"

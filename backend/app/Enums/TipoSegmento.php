@@ -11,7 +11,7 @@ enum TipoSegmento: string
     public function label(): string
     {
         return match($this) {
-            self::Normal  => 'Normal (suma puntos)',
+            self::Normal  => 'Estándar (suma puntos)',
             self::Critico => 'Crítico (penaliza)',
             self::Resumen => 'Resumen (solo texto)',
         };

@@ -6,6 +6,7 @@ use App\Models\Segmento;
 use App\Models\Pregunta;
 use App\Models\PreguntaOpcion;
 use App\Http\Requests\StorePreguntaRequest;
+use App\Http\Requests\UpdatePreguntaRequest;
 use App\Http\Resources\PreguntaResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -84,7 +85,7 @@ class PreguntaController extends Controller
      * PUT /preguntas/{id}
      * Actualiza la pregunta y reemplaza completamente sus opciones (si las tiene).
      */
-    public function update(StorePreguntaRequest $request, string $id): JsonResponse
+    public function update(UpdatePreguntaRequest $request, string $id): JsonResponse
     {
         $pregunta = Pregunta::with(['segmento.version', 'opciones'])->findOrFail($id);
 

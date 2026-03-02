@@ -152,6 +152,10 @@
   &:hover { box-shadow: var(--shadow-md); border-color: var(--border-brand); }
 
   &.segment-critico .segment-header { border-left: 4px solid var(--danger); }
+  /* Severity overrides for critico border */
+  &.critico-grave .segment-header { border-left: 4px solid #DC2626; }
+  &.critico-alto  .segment-header { border-left: 4px solid #EA580C; }
+  &.critico-leve  .segment-header { border-left: 4px solid #CA8A04; }
   &.segment-resumen .segment-header  { border-left: 4px solid #9CA3AF; }
   &:not(.segment-critico):not(.segment-resumen) .segment-header { border-left: 4px solid var(--brand); }
 }
@@ -198,6 +202,9 @@
   width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
   background: var(--brand);
   .segment-critico & { background: var(--danger); }
+  .critico-grave  & { background: #DC2626; }
+  .critico-alto   & { background: #EA580C; }
+  .critico-leve   & { background: #CA8A04; }
   .segment-resumen &  { background: #9CA3AF; }
 }
 
@@ -214,6 +221,11 @@
   border-radius: 10px; display: inline-block;
 }
 .chip-tipo  { background: #EEF0FF; color: var(--brand); }
+/* Crítico severity chips */
+.chip-critico-grave { background: #FEF2F2; color: #DC2626; font-weight: 700; }
+.chip-critico-alto  { background: #FFF7ED; color: #C2410C; font-weight: 700; }
+.chip-critico-leve  { background: #FEFCE8; color: #92400E; font-weight: 700; }
+.chip-critico-      { background: #F3F4F6; color: #6B7280; }
 .chip-peso  { background: #D1FAE5; color: #065F46;
   .chip-pts-sep { margin: 0 3px; opacity: .5; }
   strong { font-weight: 700; }

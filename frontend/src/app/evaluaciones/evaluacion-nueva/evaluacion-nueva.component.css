@@ -163,6 +163,15 @@ mat-form-field { width: 100%; }
 .check-btn.no:not(.active):hover { border-color: #FCA5A5; }
 .check-btn.parcial.active   { background: #FFFBEB; border-color: #F59E0B; color: #92400E; }
 .check-btn.parcial:not(.active):hover { border-color: #FDE68A; }
+.check-btn:disabled { opacity: .4; cursor: not-allowed; pointer-events: none; }
+
+/* Multi-select hint */
+.multi-sel-hint {
+  font-size: 12px; color: #4F46E5; font-style: italic;
+  padding: 4px 8px; background: #EEF2FF; border-radius: 6px;
+  margin-bottom: 6px;
+}
+.multi-sel-hint strong { font-style: normal; font-weight: 700; }
 
 /* Escala buttons */
 .escala-btns { display: flex; gap: 4px; flex-wrap: wrap; }

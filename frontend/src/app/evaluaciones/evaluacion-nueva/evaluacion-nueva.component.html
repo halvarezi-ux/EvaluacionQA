@@ -137,11 +137,39 @@
 
                     <!-- OPCION_MULTIPLE -->
                     <div *ngSwitchCase="'opcion_multiple'" class="opciones-select">
-                      <mat-select formControlName="respuesta_valor" placeholder="Selecciona una opción">
-                        <mat-option *ngFor="let opc of pregunta.opciones" [value]="opc.texto">
-                          {{ opc.texto }} ({{ opc.valor }} pts)
-                        </mat-option>
-                      </mat-select>
+                      <!-- Selección única (radio) -->
+                      <ng-container *ngIf="pregunta.max_selecciones === 1; else multiselect">
+                        <mat-select formControlName="respuesta_valor" placeholder="Selecciona una opción">
+                          <mat-option *ngFor="let opc of pregunta.opciones" [value]="opc.texto">
+                            {{ opc.texto }} ({{ opc.valor }} pts)
+                          </mat-option>
+                        </mat-select>
+                      </ng-container>
+
+                      <!-- Selección múltiple (checkboxes) -->
+                      <ng-template #multiselect>
+                        <div class="multi-sel-hint">
+                          <ng-container *ngIf="pregunta.max_selecciones > 0">
+                            Elige hasta <strong>{{ pregunta.max_selecciones }}</strong> opción(es)
+                            &middot; <strong>{{ getMultiSelCount(pregunta.id) }}</strong> seleccionada(s)
+                          </ng-container>
+                          <ng-container *ngIf="pregunta.max_selecciones === 0">
+                            Selecciona todas las que apliquen
+                            &middot; <strong>{{ getMultiSelCount(pregunta.id) }}</strong> seleccionada(s)
+                          </ng-container>
+                        </div>
+                        <div class="check-btns" style="flex-wrap:wrap">
+                          <button type="button"
+                                  *ngFor="let opc of pregunta.opciones"
+                                  class="check-btn parcial"
+                                  [class.active]="isMultiOpcSelected(pregunta.id, opc.texto)"
+                                  [disabled]="!isMultiOpcSelected(pregunta.id, opc.texto) && isMultiSelLleno(pregunta.id, pregunta.max_selecciones)"
+                                  (click)="toggleMultiOpcion(getPreguntaFormIndex(pregunta.id), pregunta.id, opc.texto, pregunta.max_selecciones)">
+                            <mat-icon>{{ isMultiOpcSelected(pregunta.id, opc.texto) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                            {{ opc.texto }} ({{ opc.valor }} pts)
+                          </button>
+                        </div>
+                      </ng-template>
                     </div>
 
                     <!-- PORCENTAJE -->

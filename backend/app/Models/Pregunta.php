@@ -20,6 +20,7 @@ class Pregunta extends Model
         'peso',
         'anula_segmento',
         'comentario_requerido',
+        'max_selecciones',
         'orden',
     ];
 
@@ -28,6 +29,7 @@ class Pregunta extends Model
         'comentario_requerido' => ComentarioRequerido::class,
         'peso'                 => 'decimal:2',
         'anula_segmento'       => 'boolean',
+        'max_selecciones'      => 'integer',
         'orden'                => 'integer',
     ];
 
@@ -64,6 +66,27 @@ class Pregunta extends Model
     public function calcularPuntaje(string $respuestaValor): float
     {
         $peso = (float) ($this->peso ?? 0);
+
+        // Para opcion_multiple buscamos las opciones por texto para obtener el valor
+        // Soporta tanto selección única (string) como múltiple (JSON array)
+        if ($this->tipo === \App\Enums\TipoPregunta::OpcionMultiple) {
+            $opciones = $this->relationLoaded('opciones')
+                ? $this->opciones
+                : $this->opciones()->get();
+
+            $decoded = json_decode($respuestaValor, true);
+            $textos  = is_array($decoded) ? $decoded : [$respuestaValor];
+
+            $suma = 0.0;
+            foreach ($textos as $texto) {
+                $opc = $opciones->firstWhere('texto', $texto);
+                if ($opc) {
+                    $suma += (float) $opc->valor;
+                }
+            }
+            return $suma;
+        }
+
         return $this->tipo->calcularPuntaje($respuestaValor, $peso);
     }
 

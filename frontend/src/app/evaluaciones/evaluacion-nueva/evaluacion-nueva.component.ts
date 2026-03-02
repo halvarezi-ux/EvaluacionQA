@@ -185,6 +185,17 @@ export class EvaluacionNuevaComponent implements OnInit, OnDestroy {
     const valor = this.getRespuestaValue(pregunta.id);
     if (config === 'si_es_no') return valor === 'No';
     if (config === 'si_es_si') return valor === 'Sí';
+    if (config === 'si_puntaje_cero') {
+      // Support both single (string) and multi-select (JSON array)
+      let textos: string[] = [];
+      try { const d = JSON.parse(valor); textos = Array.isArray(d) ? d : [valor]; }
+      catch { textos = valor ? [valor] : []; }
+      const totalPts = textos.reduce((sum: number, txt: string) => {
+        const opc = pregunta.opciones?.find(o => o.texto === txt);
+        return sum + (opc ? Number(opc.valor) : 0);
+      }, 0);
+      return totalPts === 0 && textos.length > 0;
+    }
     return false;
   }
 
@@ -207,6 +218,40 @@ export class EvaluacionNuevaComponent implements OnInit, OnDestroy {
     const idx = this.getPreguntaFormIndex(preguntaId);
     if (idx === -1) return;
     this.respuestasArr.at(idx).get('respuesta_valor')?.setValue(valor);
+  }
+
+  // ── Multi-select helpers (opcion_multiple con max_selecciones !== 1) ─────
+  private getMultiSelArray(preguntaId: number): string[] {
+    const val = this.getRespuestaValue(preguntaId);
+    if (!val) return [];
+    try { const arr = JSON.parse(val); return Array.isArray(arr) ? arr : [val]; }
+    catch { return [val]; }
+  }
+
+  isMultiOpcSelected(preguntaId: number, texto: string): boolean {
+    return this.getMultiSelArray(preguntaId).includes(texto);
+  }
+
+  getMultiSelCount(preguntaId: number): number {
+    return this.getMultiSelArray(preguntaId).length;
+  }
+
+  isMultiSelLleno(preguntaId: number, max: number): boolean {
+    if (max === 0) return false;
+    return this.getMultiSelArray(preguntaId).length >= max;
+  }
+
+  toggleMultiOpcion(formIdx: number, preguntaId: number, texto: string, max: number): void {
+    const arr = [...this.getMultiSelArray(preguntaId)];
+    const i = arr.indexOf(texto);
+    if (i >= 0) {
+      arr.splice(i, 1);
+    } else {
+      if (max > 0 && arr.length >= max) return;
+      arr.push(texto);
+    }
+    const newVal = arr.length > 0 ? JSON.stringify(arr) : null;
+    this.respuestasArr.at(formIdx).get('respuesta_valor')!.setValue(newVal);
   }
 
   // ── Progress ────────────────────────────────────────
