@@ -210,7 +210,13 @@
             <div class="pregunta-num">{{ pi + 1 }}</div>
 
             <div class="pregunta-content">
-              <p class="pregunta-texto">{{ pregunta.texto }}</p>
+              <p class="pregunta-texto" [class.pregunta-texto-semilla]="esTextoSemilla(pregunta.texto)">
+                <ng-container *ngIf="esTextoSemilla(pregunta.texto); else textoReal">
+                  <mat-icon class="texto-semilla-icon">edit_note</mat-icon>
+                  Sin texto — edita para agregar
+                </ng-container>
+                <ng-template #textoReal>{{ pregunta.texto }}</ng-template>
+              </p>
               <div class="pregunta-meta">
                 <span class="meta-chip mc-tipo">{{ pregunta.tipo_label }}</span>
                 <span class="meta-chip mc-peso" *ngIf="pregunta.peso != null && pregunta.peso > 0">{{ pregunta.peso }} pts</span>

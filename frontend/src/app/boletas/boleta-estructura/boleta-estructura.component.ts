@@ -457,6 +457,19 @@ export class BoletaEstructuraComponent implements OnInit {
     return p.tipo !== 'texto_libre' && (p.peso == null || Number(p.peso) <= 0);
   }
 
+  private readonly TEXTOS_SEMILLA = new Set([
+    '¿El agente saludó correctamente al cliente?',
+    '¿Cómo calificarías la resolución del caso?',
+    '¿Qué aspectos cumplió el agente durante la llamada?',
+    '¿Qué porcentaje del protocolo de cierre siguió el agente?',
+    '¿Cuántos pasos del proceso siguió correctamente el agente? (0–10)',
+    'Describe el comportamiento general observado en la llamada.',
+  ]);
+
+  esTextoSemilla(texto: string): boolean {
+    return this.TEXTOS_SEMILLA.has((texto ?? '').trim());
+  }
+
   /** Total count of unconfigured questions across all segments. */
   get totalPreguntasSinPts(): number {
     return this.segmentos.reduce((count, seg) =>

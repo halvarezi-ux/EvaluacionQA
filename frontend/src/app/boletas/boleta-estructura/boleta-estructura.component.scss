@@ -336,6 +336,18 @@
   mat-icon { font-size: 11px; width: 11px; height: 11px; color: #D97706; }
 }
 
+.pregunta-texto-semilla {
+  color: #9CA3AF !important;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  .texto-semilla-icon {
+    font-size: 15px; width: 15px; height: 15px; color: #D1D5DB;
+  }
+}
+
 /* Options preview */
 .opciones-preview {
   display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;
