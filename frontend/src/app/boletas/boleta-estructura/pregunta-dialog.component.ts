@@ -43,7 +43,7 @@ interface TipoBtn { value: string; label: string; icon: string; }
           <mat-form-field appearance="outline" class="full">
             <mat-label>Texto de la pregunta *</mat-label>
             <textarea matInput formControlName="texto" rows="3"
-                      placeholder="Ej: ¿El agente saludó correctamente al cliente?"></textarea>
+                      [placeholder]="placeholderTexto"></textarea>
             <mat-error *ngIf="form.get('texto')?.hasError('required')">El texto es requerido</mat-error>
           </mat-form-field>
 
@@ -70,23 +70,73 @@ interface TipoBtn { value: string; label: string; icon: string; }
             <label class="section-label">
               <mat-icon>stars</mat-icon> Puntos de la pregunta
             </label>
-            <div class="pts-row">
+
+            <!-- Banner: segmento sin pts disponibles -->
+            <div class="pts-full-banner" *ngIf="data.ptsDisponibles === 0">
+              <mat-icon>lock</mat-icon>
+              <div class="pts-full-banner-body">
+                <strong>Segmento sin puntos disponibles</strong>
+                <span>El segmento <strong>{{ data.segmentoNombre ?? 'este segmento' }}</strong> ya alcanzó su capacidad máxima de puntos. No es posible asignar puntos a esta pregunta hasta liberar espacio en otro.</span>
+              </div>
+            </div>
+
+            <div class="pts-row" *ngIf="data.ptsDisponibles !== 0">
               <mat-form-field appearance="outline" class="pts-field">
                 <mat-label>Puntos (pts)</mat-label>
-                <input matInput type="number" formControlName="peso" min="0.01" step="0.01"
+                <input matInput type="number" formControlName="peso" min="0.1" step="0.1"
                        [max]="data.ptsDisponibles ?? 9999">
                 <span matSuffix style="padding-right:8px;color:#6B7280;font-size:13px">pts</span>
                 <mat-error></mat-error>
               </mat-form-field>
-              <div class="pts-tip" *ngIf="data.ptsDisponibles != null">
-                <mat-icon>bolt</mat-icon>
-                <span>Disponible en el segmento <strong>{{ data.segmentoNombre ?? 'este segmento' }}</strong>: <strong>{{ ptsRestantesLive }} pts</strong></span>
+              <div class="pts-tip" [class.pts-tip-warn]="ptsRestantesLive === 0" *ngIf="data.ptsDisponibles != null">
+                <mat-icon>{{ ptsRestantesLive === 0 ? 'warning_amber' : 'bolt' }}</mat-icon>
+                <span *ngIf="ptsRestantesLive > 0">Disponible en el segmento <strong>{{ data.segmentoNombre ?? 'este segmento' }}</strong>: <strong>{{ ptsRestantesLive }} pts</strong></span>
+                <span *ngIf="ptsRestantesLive === 0">Estás usando <strong>todos</strong> los pts del segmento <strong>{{ data.segmentoNombre ?? 'este segmento' }}</strong></span>
               </div>
             </div>
+
             <div class="pts-error-chip"
-                 *ngIf="form.get('peso')?.invalid && (form.get('peso')?.touched || form.get('peso')?.dirty)">
+                 *ngIf="data.ptsDisponibles !== 0 && form.get('peso')?.invalid && (form.get('peso')?.touched || form.get('peso')?.dirty)">
               <mat-icon>error_outline</mat-icon>
-              <span>El valor debe estar entre <strong>0.01</strong> y <strong>{{ data.ptsDisponibles != null ? data.ptsDisponibles : 9999 }} pts</strong></span>
+              <span *ngIf="form.get('peso')?.hasError('required')">Los puntos son <strong>obligatorios</strong> para este tipo de pregunta</span>
+              <span *ngIf="form.get('peso')?.hasError('min') && !form.get('peso')?.hasError('required')">El valor mínimo es <strong>0.1 pts</strong></span>
+              <span *ngIf="form.get('peso')?.hasError('max')">No puede superar los <strong>{{ data.ptsDisponibles }} pts</strong> disponibles en el segmento</span>
+            </div>
+          </div>
+
+          <!-- Comentario requerido -->
+
+          <!-- Vista previa porcentaje -->
+          <div class="pct-preview-block" *ngIf="form.get('tipo')?.value === 'porcentaje'">
+            <div class="pct-preview-header">
+              <mat-icon>preview</mat-icon>
+              <span>Vista previa — cómo lo verá el evaluador</span>
+            </div>
+            <div class="pct-preview-body">
+              <div class="pct-slider-mock">
+                <div class="pct-track">
+                  <div class="pct-fill" style="width: 65%"></div>
+                  <div class="pct-thumb" style="left: 65%"></div>
+                </div>
+                <div class="pct-labels"><span>0%</span><span>50%</span><span>100%</span></div>
+              </div>
+              <div class="pct-input-mock">
+                <span class="pct-val">65</span>
+                <span class="pct-unit">%</span>
+              </div>
+              <div class="pct-pts-mock" *ngIf="form.get('peso')?.value > 0">
+                <mat-icon>bolt</mat-icon>
+                <span>Ej: 65% × <strong>{{ form.get('peso')?.value }} pts</strong>
+                  = <strong>{{ (form.get('peso')?.value * 0.65) | number:'1.0-2' }} pts</strong></span>
+              </div>
+              <div class="pct-pts-mock pct-pts-placeholder" *ngIf="!(form.get('peso')?.value > 0)">
+                <mat-icon>info_outline</mat-icon>
+                <span>Asigna puntos arriba para ver el cálculo en tiempo real</span>
+              </div>
+              <div class="pct-warns-row">
+                <div class="pct-warn-chip cero"><mat-icon>warning_amber</mat-icon> 0% → 0 pts (alerta roja)</div>
+                <div class="pct-warn-chip perfecto"><mat-icon>check_circle</mat-icon> 100% → pts máximos (confirmación verde)</div>
+              </div>
             </div>
           </div>
 
@@ -280,13 +330,29 @@ interface TipoBtn { value: string; label: string; icon: string; }
     .peso-row { display: grid; grid-template-columns: 160px 1fr; gap: 16px; align-items: flex-start; }
     .pts-row { display: grid; grid-template-columns: 160px 1fr; gap: 16px; align-items: flex-start; }
     .pts-field { width: 100%; }
+    .pts-full-banner {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 12px 14px; background: #FFF7ED;
+      border: 1.5px solid #FED7AA; border-radius: 10px;
+      color: #92400E; font-size: 13px; line-height: 1.5;
+    }
+    .pts-full-banner mat-icon { font-size: 22px; width: 22px; height: 22px; flex-shrink: 0; margin-top: 1px; color: #EA580C; }
+    .pts-full-banner-body { display: flex; flex-direction: column; gap: 3px; }
+    .pts-full-banner-body strong { font-size: 13px; font-weight: 700; color: #C2410C; display: block; }
+    .pts-full-banner-body span { font-size: 12px; color: #78350F; }
+    .pts-full-banner-body span strong { display: inline; color: #92400E; }
+
     .pts-tip {
       display: flex; gap: 8px; align-items: flex-start;
       padding: 10px 12px; background: #EFF6FF; border: 1px solid #BFDBFE;
       border-radius: 8px; font-size: 12px; color: #1D4ED8; line-height: 1.5;
+      transition: background 0.2s, border-color 0.2s;
     }
     .pts-tip mat-icon { font-size: 16px; width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; color: #3B82F6; }
     .pts-tip strong { color: #1E40AF; }
+    .pts-tip.pts-tip-warn { background: #FFFBEB; border-color: #FDE68A; color: #92400E; }
+    .pts-tip.pts-tip-warn mat-icon { color: #D97706; }
+    .pts-tip.pts-tip-warn strong { color: #78350F; }
 
     .pts-error-chip {
       display: inline-flex; align-items: center; gap: 8px;
@@ -297,6 +363,67 @@ interface TipoBtn { value: string; label: string; icon: string; }
     }
     .pts-error-chip mat-icon { font-size: 18px; width: 18px; height: 18px; color: #EF4444; flex-shrink: 0; }
     .pts-error-chip strong { color: #991B1B; font-weight: 800; font-style: normal; }
+
+    /* Porcentaje preview */
+    .pct-preview-block {
+      border: 1.5px solid #FDE68A; border-radius: 10px; overflow: hidden;
+    }
+    .pct-preview-header {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 12px; background: #FFFBEB;
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .4px; color: #92400E;
+      border-bottom: 1px solid #FDE68A;
+      mat-icon { font-size: 14px; width: 14px; height: 14px; color: #D97706; }
+    }
+    .pct-preview-body {
+      padding: 12px 14px; background: #fff; display: flex; flex-direction: column; gap: 10px;
+    }
+    .pct-slider-mock {
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .pct-track {
+      position: relative; height: 6px; background: #E5E7EB; border-radius: 3px;
+    }
+    .pct-fill {
+      position: absolute; left: 0; top: 0; height: 100%;
+      background: linear-gradient(90deg,#A78BFA,#4F46E5); border-radius: 3px;
+    }
+    .pct-thumb {
+      position: absolute; top: 50%; transform: translate(-50%,-50%);
+      width: 16px; height: 16px; background: #4F46E5;
+      border: 2px solid #fff; border-radius: 50%;
+      box-shadow: 0 1px 4px rgba(79,70,229,.4);
+    }
+    .pct-labels {
+      display: flex; justify-content: space-between;
+      font-size: 10px; color: #9CA3AF;
+    }
+    .pct-input-mock {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 10px; background: #F8F9FF; border: 1px solid #C7D2FE;
+      border-radius: 7px; align-self: flex-start;
+    }
+    .pct-val { font-size: 18px; font-weight: 700; color: #4F46E5; }
+    .pct-unit { font-size: 13px; color: #6B7280; font-weight: 600; }
+    .pct-pts-mock {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 10px; background: #EFF6FF; border: 1px solid #BFDBFE;
+      border-radius: 8px; font-size: 12px; color: #1D4ED8;
+      mat-icon { font-size: 15px; width: 15px; height: 15px; color: #3B82F6; }
+      strong { color: #1E40AF; }
+    }
+    .pct-pts-placeholder { background: #F9FAFB; border-color: #E5E7EB; color: #6B7280;
+      mat-icon { color: #9CA3AF; }
+    }
+    .pct-warns-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pct-warn-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+      mat-icon { font-size: 13px; width: 13px; height: 13px; }
+    }
+    .pct-warn-chip.cero { background: #FEF2F2; color: #991B1B; mat-icon { color: #DC2626; } }
+    .pct-warn-chip.perfecto { background: #F0FDF4; color: #166534; mat-icon { color: #16A34A; } }
 
     .alert-toggle {
       display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
@@ -380,6 +507,7 @@ export class PreguntaDialogComponent implements OnInit {
   form!: FormGroup;
   guardando = false;
   modoMultiselect = false;  // controla si el modo varias-opciones está activo (independiente del valor del campo)
+  tipoActual = 'si_no';
 
   readonly tipos: TipoBtn[] = [
     { value: 'si_no',           label: 'Sí / No',     icon: 'toggle_on'  },
@@ -412,6 +540,10 @@ export class PreguntaDialogComponent implements OnInit {
       return `El evaluador puede elegir ${maxLabel}. Los pts de cada opción seleccionada se suman.`;
     }
     return this.hints[tipo] ?? '';
+  }
+
+  get placeholderTexto(): string {
+    return this.TEXTO_DEFAULTS[this.tipoActual] ?? '¿El agente saludó correctamente al cliente?';
   }
 
   get tipoTieneOpciones(): boolean {
@@ -470,9 +602,9 @@ export class PreguntaDialogComponent implements OnInit {
     const tipo = p?.tipo ?? this.data.tipoInicial ?? 'si_no';
 
     this.form = this.fb.group({
-      texto:                [p?.texto ?? '',    [Validators.required, Validators.maxLength(1000)]],
+      texto:                [this.TODOS_DEFAULTS.has((p?.texto ?? '').trim()) ? '' : (p?.texto ?? ''),    [Validators.required, Validators.maxLength(1000)]],
       tipo:                 [tipo,               Validators.required],
-      peso:                 [p?.peso ?? null,    [Validators.min(0.01), Validators.max(this.data.ptsDisponibles ?? 9999)]],
+      peso:                 [p?.peso ?? null,    tipo !== 'texto_libre' ? [Validators.required, Validators.min(0.1), Validators.max(this.data.ptsDisponibles ?? 9999)] : []],
       anula_segmento:       [p?.anula_segmento ?? false],
       comentario_requerido: [p?.comentario_requerido ?? 'nunca'],
       max_selecciones:      [p?.max_selecciones ?? 1],
@@ -494,6 +626,9 @@ export class PreguntaDialogComponent implements OnInit {
       this.seedOpciones(tipo);
     }
 
+    // Sync tipoActual so placeholder getter reacts
+    this.tipoActual = tipo;
+
     // Auto-sync si_no: when peso changes, put pts on Si and 0 on No (user can still edit)
     this.form.get('peso')!.valueChanges.subscribe(pesoVal => {
       if (this.form.get('tipo')?.value !== 'si_no') return;
@@ -501,8 +636,24 @@ export class PreguntaDialogComponent implements OnInit {
     });
   }
 
+  private readonly TEXTO_DEFAULTS: Record<string, string> = {
+    si_no:           '¿El agente saludó correctamente al cliente?',
+    opcion_multiple: '¿Cómo calificarías la resolución del caso?',
+    checklist:       '¿Qué aspectos cumplió el agente durante la llamada?',
+    porcentaje:      '¿Qué porcentaje del protocolo de cierre siguió el agente?',
+    numerica:        '¿Cuántos pasos del proceso siguió correctamente el agente? (0–10)',
+    texto_libre:     'Describe el comportamiento general observado en la llamada.',
+  };
+
+  /** Todos los textos que se auto-generan al crear rápidamente, para detectarlos en edición. */
+  private get TODOS_DEFAULTS(): Set<string> {
+    return new Set(Object.values(this.TEXTO_DEFAULTS));
+  }
+
   setTipo(valor: string): void {
     if (this.form.get('tipo')?.value === valor) return;
+    this.tipoActual = valor;
+
     // Reset max_selecciones to single when leaving opcion_multiple
     if (valor !== 'opcion_multiple') {
       this.form.patchValue({ max_selecciones: 1 });
@@ -521,6 +672,23 @@ export class PreguntaDialogComponent implements OnInit {
     this.seedOpciones(valor);
     if (valor === 'si_no') {
       this.syncSiNoOpciones(this.form.get('peso')?.value);
+    }
+    this.updatePesoValidators(valor);
+  }
+
+  private updatePesoValidators(tipo: string): void {
+    const pesoCtrl = this.form.get('peso');
+    if (!pesoCtrl) return;
+    if (tipo === 'texto_libre') {
+      pesoCtrl.clearValidators();
+      pesoCtrl.updateValueAndValidity();
+    } else {
+      pesoCtrl.setValidators([
+        Validators.required,
+        Validators.min(0.1),
+        Validators.max(this.data.ptsDisponibles ?? 9999),
+      ]);
+      pesoCtrl.updateValueAndValidity();
     }
   }
 
@@ -611,7 +779,10 @@ export class PreguntaDialogComponent implements OnInit {
   opcGrp(i: number): FormGroup { return this.opciones.at(i) as FormGroup; }
 
   guardar(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.get('peso')?.markAsTouched();
+      return;
+    }
 
     const raw = this.form.getRawValue();  // getRawValue includes disabled controls
 
@@ -665,7 +836,9 @@ export class PreguntaDialogComponent implements OnInit {
       max_selecciones:      raw.tipo === 'opcion_multiple'
                               ? (this.modoMultiselect ? (Number(raw.max_selecciones) || 0) : 1)
                               : undefined,
-      opciones: raw.opciones.map((o: any, i: number) => ({ texto: o.texto, valor: o.valor, orden: i + 1 })),
+      opciones: this.tipoTieneOpciones
+                  ? raw.opciones.map((o: any, i: number) => ({ texto: o.texto, valor: o.valor, orden: i + 1 }))
+                  : undefined,
     };
 
     const req$ = this.data.pregunta

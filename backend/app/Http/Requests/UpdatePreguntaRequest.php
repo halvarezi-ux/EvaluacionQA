@@ -16,16 +16,21 @@ class UpdatePreguntaRequest extends FormRequest
 
     public function rules(): array
     {
+        $tipo = $this->input('tipo');
+        $requiereOpciones = in_array($tipo, ['opcion_multiple', 'checklist']);
+
         return [
             'texto'                => ['required', 'string', 'max:1000'],
             'tipo'                 => ['required', new Enum(TipoPregunta::class)],
-            'peso'                 => ['sometimes', 'nullable', 'numeric', 'min:0.01', 'max:100'],
+            'peso'                 => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:100'],
             'anula_segmento'       => ['sometimes', 'boolean'],
-            'comentario_requerido' => ['sometimes', new Enum(ComentarioRequerido::class)],
+            'comentario_requerido' => ['sometimes', 'nullable', new Enum(ComentarioRequerido::class)],
             'orden'                => ['sometimes', 'integer', 'min:0'],
             'max_selecciones'      => ['sometimes', 'integer', 'min:0'],
-            // Opciones son opcionales en updates: si vienen se reemplazan, si no vienen se conservan.
-            'opciones'             => ['sometimes', 'array', 'min:2'],
+            // Solo aplica min:2 cuando el tipo realmente requiere opciones
+            'opciones'             => $requiereOpciones
+                                        ? ['sometimes', 'array', 'min:2']
+                                        : ['sometimes', 'array'],
             'opciones.*.texto'     => ['required_with:opciones', 'string', 'max:500'],
             'opciones.*.valor'     => ['required_with:opciones', 'numeric', 'min:0'],
             'opciones.*.orden'     => ['sometimes', 'integer', 'min:0'],

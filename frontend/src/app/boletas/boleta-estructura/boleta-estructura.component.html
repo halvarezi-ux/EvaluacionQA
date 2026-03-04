@@ -14,10 +14,11 @@
       <button mat-raised-button style="background:#10B981;color:#fff"
               *ngIf="esBorrador"
               (click)="publicarVersion()"
-              [disabled]="publicando"
-              matTooltip="Publica este borrador como la versión activa">
+              [disabled]="publicando || totalPreguntasSinPts > 0"
+              [matTooltip]="totalPreguntasSinPts > 0 ? (totalPreguntasSinPts + ' pregunta(s) sin puntos — configúralas antes de publicar') : 'Publica este borrador como la versión activa'">
         <mat-icon>rocket_launch</mat-icon>
         {{ publicando ? 'Publicando...' : 'Publicar versión' }}
+        <span class="publish-warn-badge" *ngIf="totalPreguntasSinPts > 0">{{ totalPreguntasSinPts }}</span>
       </button>
       <button mat-raised-button color="primary"
               (click)="crearSegmento()"
@@ -97,6 +98,15 @@
       <mat-icon>add</mat-icon>
       Crear primer segmento
     </button>
+  </div>
+
+  <!-- ── Warning: preguntas sin configurar ─────────────── -->
+  <div class="warning-config-banner" *ngIf="!loading && canEdit && totalPreguntasSinPts > 0">
+    <mat-icon>warning_amber</mat-icon>
+    <div class="warning-config-body">
+      <strong>{{ totalPreguntasSinPts }} pregunta{{ totalPreguntasSinPts > 1 ? 's' : '' }} sin puntos asignados</strong>
+      <span>Todas las preguntas (excepto «Texto libre») deben tener puntos antes de publicar. Las que faltan están marcadas con <strong>⚠ Sin puntos</strong> — haz clic en el ícono ✏️ para configurarlas o eliminarlas.</span>
+    </div>
   </div>
 
   <!-- ── Segments drag-drop list ─────────────────────── -->
@@ -203,7 +213,10 @@
               <p class="pregunta-texto">{{ pregunta.texto }}</p>
               <div class="pregunta-meta">
                 <span class="meta-chip mc-tipo">{{ pregunta.tipo_label }}</span>
-                <span class="meta-chip mc-peso" *ngIf="pregunta.peso != null">{{ pregunta.peso }} pts</span>
+                <span class="meta-chip mc-peso" *ngIf="pregunta.peso != null && pregunta.peso > 0">{{ pregunta.peso }} pts</span>
+                <span class="meta-chip mc-sin-pts" *ngIf="preguntaSinPts(pregunta)">
+                  <mat-icon>warning_amber</mat-icon> Sin puntos
+                </span>
                 <span class="meta-chip mc-fatal" *ngIf="pregunta.anula_segmento">
                   <mat-icon>warning</mat-icon> Anula segmento
                 </span>

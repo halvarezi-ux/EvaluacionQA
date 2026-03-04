@@ -254,6 +254,37 @@ export class EvaluacionNuevaComponent implements OnInit, OnDestroy {
     this.respuestasArr.at(formIdx).get('respuesta_valor')!.setValue(newVal);
   }
 
+  // ── Porcentaje validations & calculations ───────────────
+  /** Validate porcentaje: 0-100, 2 decimal places max */
+  validarPorcentaje(valor: any): number | null {
+    if (valor == null || valor === '') return null;
+    const num = Number(valor);
+    if (isNaN(num)) return null;
+    // Clamp to 0-100
+    const clamped = Math.max(0, Math.min(100, num));
+    // Round to 2 decimals
+    return Math.round(clamped * 100) / 100;
+  }
+
+  /** Get final points for a porcentaje pregunta = peso × (porcentaje / 100) */
+  getPuntosForPorcentaje(pregunta: Pregunta, porcentajeValue: any): number | null {
+    if (pregunta.tipo !== 'porcentaje') return null;
+    const pct = this.validarPorcentaje(porcentajeValue);
+    if (pct == null) return null;
+    const peso = Number(pregunta.peso ?? 0);
+    if (peso <= 0) return 0;
+    return Math.round((peso * pct / 100) * 100) / 100;  // 2 decimals
+  }
+
+  /** Warning type for porcentaje: null=normal, 'cero'=0%, 'perfecto'=100% */
+  advertenciaPorcentaje(valor: any): 'cero' | 'perfecto' | null {
+    const pct = this.validarPorcentaje(valor);
+    if (pct == null) return null;
+    if (pct === 0) return 'cero';
+    if (pct === 100) return 'perfecto';
+    return null;
+  }
+
   // ── Progress ────────────────────────────────────────
   get completadas(): number {
     return this.respuestasArr.controls.filter(c => c.get('respuesta_valor')?.value !== null).length;

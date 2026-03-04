@@ -173,11 +173,39 @@
                     </div>
 
                     <!-- PORCENTAJE -->
-                    <div *ngSwitchCase="'porcentaje'" class="porcentaje-input">
-                      <mat-slider min="0" max="100" step="5" showTickMarks discrete>
-                        <input matSliderThumb formControlName="respuesta_valor">
-                      </mat-slider>
-                      <span class="valor-display">{{ getRespuestaValue(pregunta.id) || 0 }}%</span>
+                    <div *ngSwitchCase="'porcentaje'" class="porcentaje-wrapper">
+                      <!-- Slider + Input -->
+                      <div class="porcentaje-input">
+                        <mat-slider min="0" max="100" step="0.1" showTickMarks discrete>
+                          <input matSliderThumb formControlName="respuesta_valor">
+                        </mat-slider>
+                        <div class="porcentaje-controls">
+                          <input type="number" 
+                                 class="porcentaje-number"
+                                 formControlName="respuesta_valor"
+                                 min="0" max="100" step="0.01"
+                                 placeholder="0.00">
+                          <span class="porcentaje-unit">%</span>
+                        </div>
+                      </div>
+
+                      <!-- Preview de puntos -->
+                      <div class="porcentaje-preview" *ngIf="getRespuestaValue(pregunta.id) != null">
+                        <span class="preview-label">Puntos:</span>
+                        <span class="preview-value">{{ getPuntosForPorcentaje(pregunta, getRespuestaValue(pregunta.id)) ?? 0 }} / {{ pregunta.peso ?? 0 }} pts</span>
+                      </div>
+
+                      <!-- Warning: 0% -->
+                      <div class="porcentaje-warning cero" *ngIf="advertenciaPorcentaje(getRespuestaValue(pregunta.id)) === 'cero'">
+                        <mat-icon>warning_amber</mat-icon>
+                        <span><strong>0%</strong> — ¿Es intencional? Se otorgarán <strong>0 puntos</strong>.</span>
+                      </div>
+
+                      <!-- Check: 100% -->
+                      <div class="porcentaje-warning perfecto" *ngIf="advertenciaPorcentaje(getRespuestaValue(pregunta.id)) === 'perfecto'">
+                        <mat-icon>check_circle</mat-icon>
+                        <span><strong>100%</strong> — Puntuación perfecta: <strong>{{ pregunta.peso }} pts</strong>.</span>
+                      </div>
                     </div>
 
                     <!-- NUMERICA -->

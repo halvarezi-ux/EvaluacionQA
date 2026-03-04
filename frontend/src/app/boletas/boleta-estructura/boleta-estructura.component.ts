@@ -332,18 +332,13 @@ export class BoletaEstructuraComponent implements OnInit {
     if (event.previousIndex === event.currentIndex || !segmento.preguntas) return;
     this.hasChanges = true;
     moveItemInArray(segmento.preguntas, event.previousIndex, event.currentIndex);
+    // Only send the minimum required fields + orden to avoid validation edge cases
+    // (comentario_requerido can be null, peso can be 0, etc.)
     const updates = segmento.preguntas.map((p, i) =>
       this.preguntaService.updatePregunta(p.id, {
         texto: p.texto,
         tipo: p.tipo,
-        peso: p.peso ?? undefined,
-        anula_segmento: p.anula_segmento,
-        comentario_requerido: p.comentario_requerido,
-        max_selecciones: p.max_selecciones ?? undefined,
         orden: i + 1,
-        opciones: p.opciones?.length
-          ? p.opciones.map((o, oi) => ({ texto: o.texto, valor: o.valor, orden: oi + 1 }))
-          : undefined,
       })
     );
     forkJoin(updates).subscribe({
@@ -364,12 +359,12 @@ export class BoletaEstructuraComponent implements OnInit {
     if (!this.canEdit) return;
 
     const defaultsByTipo: Record<string, { texto: string; opciones: { texto: string; valor: number; orden: number }[] }> = {
-      si_no:           { texto: 'Nueva pregunta',           opciones: [{ texto: 'Sí', valor: 1, orden: 1 }, { texto: 'No', valor: 0, orden: 2 }] },
-      opcion_multiple: { texto: 'Nueva opción múltiple',    opciones: [{ texto: 'Opción A', valor: 0, orden: 1 }, { texto: 'Opción B', valor: 0, orden: 2 }] },
-      porcentaje:      { texto: 'Puntuación (0–100%)',      opciones: [] },
-      numerica:        { texto: 'Valor numérico',           opciones: [] },
-      checklist:       { texto: 'Nueva checklist',          opciones: [{ texto: 'Criterio A', valor: 1, orden: 1 }, { texto: 'Criterio B', valor: 1, orden: 2 }] },
-      texto_libre:     { texto: 'Comentario / observación', opciones: [] },
+      si_no:           { texto: '¿El agente saludó correctamente al cliente?',                  opciones: [{ texto: 'Sí', valor: 1, orden: 1 }, { texto: 'No', valor: 0, orden: 2 }] },
+      opcion_multiple: { texto: '¿Cómo calificarías la resolución del caso?',                   opciones: [{ texto: 'Opción A', valor: 0, orden: 1 }, { texto: 'Opción B', valor: 0, orden: 2 }] },
+      porcentaje:      { texto: '¿Qué porcentaje del protocolo de cierre siguió el agente?', opciones: [] },
+      numerica:        { texto: '¿Cuántos pasos del proceso siguió correctamente el agente? (0–10)', opciones: [] },
+      checklist:       { texto: '¿Qué aspectos cumplió el agente durante la llamada?',          opciones: [{ texto: 'Criterio A', valor: 1, orden: 1 }, { texto: 'Criterio B', valor: 1, orden: 2 }] },
+      texto_libre:     { texto: 'Describe el comportamiento general observado en la llamada.',   opciones: [] },
     };
 
     const def = defaultsByTipo[tipo] ?? { texto: 'Nueva pregunta', opciones: [] };
@@ -455,6 +450,18 @@ export class BoletaEstructuraComponent implements OnInit {
   /** Only texto_libre has no pts. */
   tipoCostaPuntos(tipo: string): boolean {
     return tipo !== 'texto_libre';
+  }
+
+  /** A question is unconfigured if it requires pts but has none assigned yet. */
+  preguntaSinPts(p: Pregunta): boolean {
+    return p.tipo !== 'texto_libre' && (p.peso == null || Number(p.peso) <= 0);
+  }
+
+  /** Total count of unconfigured questions across all segments. */
+  get totalPreguntasSinPts(): number {
+    return this.segmentos.reduce((count, seg) =>
+      count + (seg.preguntas ?? []).filter(p => this.preguntaSinPts(p)).length, 0
+    );
   }
 
   volver(): void {
