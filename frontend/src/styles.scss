@@ -82,6 +82,15 @@ body { margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; li
   /* Layout */
   --sidenav-width:   256px;
   --toolbar-height:  64px;
+
+  /* ── Login dark-theme aliases ───────────────────────────
+     El componente de login usa un diseño "glass oscuro" y
+     necesita estas variables separadas del light theme.    */
+  --bg-base:       #0F172A;   /* fondo oscuro total */
+  --primary-500:   #6366F1;   /* indigo-500 */
+  --primary-600:   #4F46E5;   /* indigo-600 */
+  --primary-700:   #4338CA;   /* indigo-700 */
+  --primary-rgb:   79, 70, 229; /* indigo-600 en R,G,B para rgba() */
 }
 
 /* 3. Material table full-width */

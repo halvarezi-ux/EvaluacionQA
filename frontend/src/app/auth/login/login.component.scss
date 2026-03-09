@@ -23,6 +23,11 @@ input {
   position: relative;
   padding: 24px;
 
+  // Sobreescribir variables de texto para el contexto oscuro del login
+  --text-primary:   #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-muted:     #64748B;
+
   // Doble radial gradient con profundidad atmosférica refinada
   &::before {
     content: '';
