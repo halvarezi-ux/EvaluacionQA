@@ -99,7 +99,8 @@
             </mat-expansion-panel-header>
 
             <div class="criterios-list" formArrayName="respuestas">
-              <div *ngFor="let pregunta of seg.preguntas; let pi = index"
+              <ng-container *ngFor="let pregunta of seg.preguntas; let pi = index">
+              <div *ngIf="pregunta.tipo !== 'checklist' || isChecklistVisible(seg, pregunta)"
                    [formGroupName]="getPreguntaFormIndex(pregunta.id)"
                    class="criterio-row"
                    [class.criterio-completado]="getRespuestaValue(pregunta.id) !== null && getRespuestaValue(pregunta.id) !== undefined && getRespuestaValue(pregunta.id) !== ''">
@@ -213,16 +214,28 @@
                       <input type="number" class="obs-input" formControlName="respuesta_valor" placeholder="Ingresa un número">
                     </div>
 
-                    <!-- CHECKLIST -->
-                    <div *ngSwitchCase="'checklist'" class="check-btns">
-                      <button type="button"
-                              *ngFor="let opc of pregunta.opciones"
-                              class="check-btn parcial"
-                              [class.active]="getRespuestaValue(pregunta.id) === opc.texto"
-                              (click)="setRespuestaValue(pregunta.id, opc.texto)">
-                        <mat-icon>{{ getRespuestaValue(pregunta.id) === opc.texto ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
-                        {{ opc.texto }}
-                      </button>
+                    <!-- CHECKLIST: Branching / Decision-tree -->
+                    <div *ngSwitchCase="'checklist'">
+                      <!-- Already answered: read-only badge -->
+                      <ng-container *ngIf="getBranchAnswerLabel(seg, pregunta) as ansLabel">
+                        <div class="branch-answered">
+                          <mat-icon class="branch-check">check_circle</mat-icon>
+                          <span>{{ ansLabel }}</span>
+                        </div>
+                      </ng-container>
+                      <!-- Not yet answered: interactive options -->
+                      <ng-container *ngIf="!getBranchAnswerLabel(seg, pregunta)">
+                        <div class="check-btns">
+                          <button type="button"
+                                  *ngFor="let opc of pregunta.opciones"
+                                  class="check-btn branch-opt"
+                                  (click)="onBranchAnswer(seg, pregunta, opc)">
+                            <mat-icon>chevron_right</mat-icon>
+                            {{ opc.texto }}
+                            <span *ngIf="opc.valor > 0" class="opc-pts-tag">+{{ opc.valor }} pts</span>
+                          </button>
+                        </div>
+                      </ng-container>
                     </div>
 
                     <!-- TEXTO_LIBRE -->
@@ -245,6 +258,13 @@
                               rows="1" style="margin-top: 6px;"></textarea>
                   </div>
                 </div>
+              </div>
+              </ng-container>
+
+              <!-- Branch-done banner: shown when all reachable checklist questions are answered -->
+              <div class="branch-done-banner" *ngIf="branchCompleto(seg)">
+                <mat-icon>account_tree</mat-icon>
+                <span>Rama de decisión completada</span>
               </div>
             </div>
           </mat-expansion-panel>

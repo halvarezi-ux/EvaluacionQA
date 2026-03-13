@@ -17,17 +17,24 @@ class PreguntaOpcion extends Model
         'texto',
         'valor',
         'orden',
+        'next_pregunta_id',
     ];
 
     protected $casts = [
-        'valor' => 'decimal:2',
-        'orden' => 'integer',
+        'valor'            => 'decimal:2',
+        'orden'            => 'integer',
+        'next_pregunta_id' => 'integer',
     ];
 
-    // ─── Relaciones ─────────────────────────────────────────────────
+    // ─── Relaciones ─────────────────────────────────────────────
 
     public function pregunta(): BelongsTo
     {
         return $this->belongsTo(Pregunta::class);
+    }
+
+    public function nextPregunta(): BelongsTo
+    {
+        return $this->belongsTo(Pregunta::class, 'next_pregunta_id');
     }
 }

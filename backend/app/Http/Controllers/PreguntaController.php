@@ -53,9 +53,10 @@ class PreguntaController extends Controller
             if ($request->filled('opciones')) {
                 foreach ($request->opciones as $index => $opcionData) {
                     $pregunta->opciones()->create([
-                        'texto'  => $opcionData['texto'],
-                        'valor'  => $opcionData['valor'],
-                        'orden'  => $opcionData['orden'] ?? ($index + 1),
+                        'texto'            => $opcionData['texto'],
+                        'valor'            => $opcionData['valor'],
+                        'orden'            => $opcionData['orden'] ?? ($index + 1),
+                        'next_pregunta_id' => $opcionData['next_pregunta_id'] ?? null,
                     ]);
                 }
             }
@@ -104,9 +105,10 @@ class PreguntaController extends Controller
 
                 foreach ($request->opciones as $index => $opcionData) {
                     $pregunta->opciones()->create([
-                        'texto'  => $opcionData['texto'],
-                        'valor'  => $opcionData['valor'],
-                        'orden'  => $opcionData['orden'] ?? ($index + 1),
+                        'texto'            => $opcionData['texto'],
+                        'valor'            => $opcionData['valor'],
+                        'orden'            => $opcionData['orden'] ?? ($index + 1),
+                        'next_pregunta_id' => $opcionData['next_pregunta_id'] ?? null,
                     ]);
                 }
             }

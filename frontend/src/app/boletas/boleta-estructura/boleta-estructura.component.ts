@@ -199,7 +199,7 @@ export class BoletaEstructuraComponent implements OnInit {
   crearPregunta(segmento: Segmento): void {
     const dialogRef = this.dialog.open(PreguntaDialogComponent, {
       width: '700px',
-      data: { segmentoId: segmento.id, ptsDisponibles: this.ptsRestantes(segmento), segmentoNombre: segmento.nombre }
+      data: { segmentoId: segmento.id, ptsDisponibles: this.ptsRestantes(segmento), segmentoNombre: segmento.nombre, preguntasDelSegmento: segmento.preguntas ?? [] }
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -215,7 +215,7 @@ export class BoletaEstructuraComponent implements OnInit {
     const disponibles = this.ptsRestantes(segmento) + this.ptsDePregunta(pregunta);
     const dialogRef = this.dialog.open(PreguntaDialogComponent, {
       width: '700px',
-      data: { pregunta, segmentoId: segmento.id, ptsDisponibles: disponibles, segmentoNombre: segmento.nombre }
+      data: { pregunta, segmentoId: segmento.id, ptsDisponibles: disponibles, segmentoNombre: segmento.nombre, preguntasDelSegmento: (segmento.preguntas ?? []).filter(p => p.id !== pregunta.id) }
     });
 
     dialogRef.afterClosed().subscribe((result: Pregunta | undefined) => {
@@ -454,7 +454,7 @@ export class BoletaEstructuraComponent implements OnInit {
 
   /** A question is unconfigured if it requires pts but has none assigned yet. */
   preguntaSinPts(p: Pregunta): boolean {
-    return p.tipo !== 'texto_libre' && (p.peso == null || Number(p.peso) <= 0);
+    return p.tipo !== 'texto_libre' && p.tipo !== 'checklist' && (p.peso == null || Number(p.peso) <= 0);
   }
 
   private readonly TEXTOS_SEMILLA = new Set([

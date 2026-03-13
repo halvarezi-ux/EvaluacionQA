@@ -69,6 +69,7 @@ interface TipoBtn { value: string; label: string; icon: string; }
           <div class="field-group" *ngIf="form.get('tipo')?.value !== 'texto_libre'">
             <label class="section-label">
               <mat-icon>stars</mat-icon> Puntos de la pregunta
+              <span *ngIf="form.get('tipo')?.value === 'checklist'" class="pts-badge-opcional">(opcional)</span>
             </label>
 
             <!-- Banner: segmento sin pts disponibles -->
@@ -243,6 +244,17 @@ interface TipoBtn { value: string; label: string; icon: string; }
                   <mat-label>Puntos</mat-label>
                   <input matInput type="number" formControlName="valor" min="0" step="0.01">
                   <mat-error>Requerido</mat-error>
+                </mat-form-field>
+                <!-- Selector de rama (solo checklist) -->
+                <mat-form-field appearance="outline" class="opc-branch"
+                                *ngIf="form.get('tipo')?.value === 'checklist'">
+                  <mat-label>→ Siguiente</mat-label>
+                  <mat-select formControlName="next_pregunta_id">
+                    <mat-option [value]="null">Fin de rama</mat-option>
+                    <mat-option *ngFor="let p of preguntasDelSegmento" [value]="p.id">
+                      {{ p.texto.length > 42 ? (p.texto | slice:0:42) + '…' : p.texto }}
+                    </mat-option>
+                  </mat-select>
                 </mat-form-field>
                 <button type="button" mat-icon-button color="warn"
                         [disabled]="opciones.length <= minOpciones || form.get('tipo')?.value === 'si_no'"
@@ -466,7 +478,7 @@ interface TipoBtn { value: string; label: string; icon: string; }
     }
     .add-opcion-btn:hover mat-icon { background: #C7D2FE; }
     .add-opcion-btn:active { background: #DDD6FE; border-color: #3730A3; }
-    .opc-row { display: flex; align-items: center; gap: 8px; }
+    .opc-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .opc-row-readonly .mat-mdc-form-field { opacity: 1; }
     .opc-row-readonly .mat-mdc-form-field .mdc-text-field { background: #F3F4F6 !important; }
     .opc-row-readonly .mat-mdc-form-field input { color: #374151 !important; cursor: default; }
@@ -475,8 +487,14 @@ interface TipoBtn { value: string; label: string; icon: string; }
       background: #4F46E5; color: #fff; font-size: 11px; font-weight: 700;
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
-    .opc-texto { flex: 1; }
+    .opc-texto { flex: 1; min-width: 140px; }
     .opc-pts { width: 110px; flex-shrink: 0; }
+    .opc-branch { width: 190px; flex-shrink: 0; }
+    .pts-badge-opcional {
+      font-size: 11px; font-weight: 600; color: #6B7280;
+      background: #F3F4F6; border-radius: 4px; padding: 1px 5px;
+      text-transform: lowercase; letter-spacing: 0;
+    }
 
     .sel-mode-wrap { display: flex; flex-direction: column; gap: 8px; padding: 10px 0 4px; border-top: 1px dashed #C7D2FE; }
     .sel-mode-btns { display: flex; gap: 8px; }
@@ -502,7 +520,7 @@ export class PreguntaDialogComponent implements OnInit {
   private notificationService = inject(NotificationService);
 
   dialogRef = inject(MatDialogRef<PreguntaDialogComponent>);
-  data = inject<{ pregunta?: Pregunta; segmentoId: number; tipoInicial?: string; ptsDisponibles?: number; segmentoNombre?: string }>(MAT_DIALOG_DATA);
+  data = inject<{ pregunta?: Pregunta; segmentoId: number; tipoInicial?: string; ptsDisponibles?: number; segmentoNombre?: string; preguntasDelSegmento?: Pregunta[] }>(MAT_DIALOG_DATA);
 
   form!: FormGroup;
   guardando = false;
@@ -597,6 +615,11 @@ export class PreguntaDialogComponent implements OnInit {
     return this.form.get('opciones') as FormArray;
   }
 
+  /** Preguntas del mismo segmento (para el selector de rama checklist). */
+  get preguntasDelSegmento(): Pregunta[] {
+    return this.data.preguntasDelSegmento ?? [];
+  }
+
   ngOnInit(): void {
     const p = this.data.pregunta;
     const tipo = p?.tipo ?? this.data.tipoInicial ?? 'si_no';
@@ -604,7 +627,7 @@ export class PreguntaDialogComponent implements OnInit {
     this.form = this.fb.group({
       texto:                [this.TODOS_DEFAULTS.has((p?.texto ?? '').trim()) ? '' : (p?.texto ?? ''),    [Validators.required, Validators.maxLength(1000)]],
       tipo:                 [tipo,               Validators.required],
-      peso:                 [p?.peso ?? null,    tipo !== 'texto_libre' ? [Validators.required, Validators.min(0.1), Validators.max(this.data.ptsDisponibles ?? 9999)] : []],
+      peso:                 [p?.peso ?? null,    (tipo !== 'texto_libre' && tipo !== 'checklist') ? [Validators.required, Validators.min(0.1), Validators.max(this.data.ptsDisponibles ?? 9999)] : []],
       anula_segmento:       [p?.anula_segmento ?? false],
       comentario_requerido: [p?.comentario_requerido ?? 'nunca'],
       max_selecciones:      [p?.max_selecciones ?? 1],
@@ -615,7 +638,7 @@ export class PreguntaDialogComponent implements OnInit {
     this.modoMultiselect = tipo === 'opcion_multiple' && (p?.max_selecciones ?? 1) !== 1;
 
     if (p?.opciones?.length) {
-      p.opciones.forEach(o => this.pushOpcion(o.texto, o.valor));
+      p.opciones.forEach(o => this.pushOpcion(o.texto, o.valor, o.next_pregunta_id ?? null));
       // For existing si_no, lock the texto labels (Sí/No) but keep valor editable
       if (tipo === 'si_no') {
         (this.opciones.controls as FormGroup[]).forEach(grp =>
@@ -679,7 +702,7 @@ export class PreguntaDialogComponent implements OnInit {
   private updatePesoValidators(tipo: string): void {
     const pesoCtrl = this.form.get('peso');
     if (!pesoCtrl) return;
-    if (tipo === 'texto_libre') {
+    if (tipo === 'texto_libre' || tipo === 'checklist') {
       pesoCtrl.clearValidators();
       pesoCtrl.updateValueAndValidity();
     } else {
@@ -745,11 +768,12 @@ export class PreguntaDialogComponent implements OnInit {
 
   agregarOpcion(): void { this.pushOpcion('', 0); }
 
-  private pushOpcion(texto: string, valor: number | null): void {
+  private pushOpcion(texto: string, valor: number | null, nextPreguntaId: number | null = null): void {
     const isSiNo = this.form?.get('tipo')?.value === 'si_no';
     const grp = this.fb.group({
-      texto: [texto, Validators.required],
-      valor: [null as number | null, isSiNo ? [] : [Validators.required, Validators.min(0)]],
+      texto:            [texto, Validators.required],
+      valor:            [null as number | null, isSiNo ? [] : [Validators.required, Validators.min(0)]],
+      next_pregunta_id: [nextPreguntaId as number | null],
     });
     // Asignar el valor explícitamente después de crear el grupo para forzar render correcto
     grp.get('valor')?.setValue(valor, { emitEvent: false });
@@ -837,7 +861,12 @@ export class PreguntaDialogComponent implements OnInit {
                               ? (this.modoMultiselect ? (Number(raw.max_selecciones) || 0) : 1)
                               : undefined,
       opciones: this.tipoTieneOpciones
-                  ? raw.opciones.map((o: any, i: number) => ({ texto: o.texto, valor: o.valor, orden: i + 1 }))
+                  ? raw.opciones.map((o: any, i: number) => ({
+                      texto: o.texto,
+                      valor: o.valor,
+                      orden: i + 1,
+                      ...(raw.tipo === 'checklist' ? { next_pregunta_id: o.next_pregunta_id ?? null } : {}),
+                    }))
                   : undefined,
     };
 

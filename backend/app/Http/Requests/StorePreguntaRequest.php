@@ -30,9 +30,10 @@ class StorePreguntaRequest extends FormRequest
             'opciones'             => $requiereOpciones
                                         ? ['required', 'array', 'min:2']
                                         : ['sometimes', 'array'],
-            'opciones.*.texto'     => ['required_with:opciones', 'string', 'max:500'],
-            'opciones.*.valor'     => ['required_with:opciones', 'numeric', 'min:0'],
-            'opciones.*.orden'     => ['sometimes', 'integer', 'min:0'],
+            'opciones.*.texto'           => ['required_with:opciones', 'string', 'max:500'],
+            'opciones.*.valor'           => ['required_with:opciones', 'numeric', 'min:0'],
+            'opciones.*.orden'           => ['sometimes', 'integer', 'min:0'],
+            'opciones.*.next_pregunta_id' => ['sometimes', 'nullable', 'integer', 'exists:preguntas,id'],
         ];
     }
 

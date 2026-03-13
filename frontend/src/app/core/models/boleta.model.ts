@@ -74,10 +74,11 @@ export interface Pregunta {
 }
 
 export interface PreguntaOpcion {
-  id:    number;
-  texto: string;
-  valor: number;
-  orden: number;
+  id:              number;
+  texto:           string;
+  valor:           number;
+  orden:           number;
+  next_pregunta_id?: number | null;
 }
 
 export interface Evaluacion {
@@ -139,7 +140,7 @@ export interface CreatePreguntaDto {
   comentario_requerido?: ComentarioRequerido;
   max_selecciones?:     number;
   orden?:               number;
-  opciones?:            { texto: string; valor: number; orden?: number }[];
+  opciones?:            { texto: string; valor: number; orden?: number; next_pregunta_id?: number | null }[];
 }
 
 export interface CreateEvaluacionDto {

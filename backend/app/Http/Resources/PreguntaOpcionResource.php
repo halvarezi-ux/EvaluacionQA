@@ -10,10 +10,11 @@ class PreguntaOpcionResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'     => $this->id,
-            'texto'  => $this->texto,
-            'valor'  => (float) $this->valor,
-            'orden'  => $this->orden,
+            'id'               => $this->id,
+            'texto'            => $this->texto,
+            'valor'            => (float) $this->valor,
+            'orden'            => $this->orden,
+            'next_pregunta_id' => $this->next_pregunta_id,
         ];
     }
 }

@@ -23,7 +23,7 @@ import { AreaService }        from '../../core/services/area.service';
 import { EvaluacionService }  from '../services/evaluacion.service';
 import { NotificationService } from '../../shared/services/notification.service';
 import {
-  Boleta, BoletaVersion, Segmento, Pregunta, Area,
+  Boleta, BoletaVersion, Segmento, Pregunta, PreguntaOpcion, Area,
   CreateEvaluacionDto,
 } from '../../core/models/boleta.model';
 import { nivelClass, nivelColor, NivelEval } from '../models/evaluacion.model';
@@ -57,6 +57,10 @@ export class EvaluacionNuevaComponent implements OnInit, OnDestroy {
   // Forms
   metaForm!:      FormGroup;
   respuestasArr!: FormArray;
+
+  // Branch state for checklist (decision-tree) questions:
+  // segmentoId → { currentId: pregunta.id or null (branch done), answered: Map<preguntaId, selectedText> }
+  branchState = new Map<number, { currentId: number | null; answered: Map<number, string> }>();
 
   // Exposed helpers
   nivelClass = nivelClass;
@@ -140,17 +144,60 @@ export class EvaluacionNuevaComponent implements OnInit, OnDestroy {
   private buildRespuestasFrom(version: BoletaVersion): void {
     this.segmentos = version.segmentos ?? [];
     this.preguntas = [];
+    this.branchState.clear();
 
     this.segmentos.forEach(seg => {
       (seg.preguntas ?? []).forEach(preg => {
         this.preguntas.push(preg);
         this.respuestasArr.push(this.fb.group({
           pregunta_id:     [preg.id],
-          respuesta_valor: [null, Validators.required],
+          // Checklist questions in a branch may never be reached, so they are NOT required
+          respuesta_valor: [null, preg.tipo !== 'checklist' ? Validators.required : null],
           comentario:      [''],
         }));
       });
+
+      // Initialize branch state for segments containing checklist questions
+      const firstChecklist = (seg.preguntas ?? []).find(p => p.tipo === 'checklist');
+      if (firstChecklist) {
+        this.branchState.set(seg.id, { currentId: firstChecklist.id, answered: new Map() });
+      }
     });
+  }
+
+  // ── Branch-logic helpers (checklist decision-tree) ────────────────────────
+
+  /** True if this segment contains at least one checklist (branching) question. */
+  segmentoTieneBranch(segmento: Segmento): boolean {
+    return (segmento.preguntas ?? []).some(p => p.tipo === 'checklist');
+  }
+
+  /** True if this checklist pregunta should be visible: it's the current branch node OR already answered. */
+  isChecklistVisible(segmento: Segmento, pregunta: Pregunta): boolean {
+    const state = this.branchState.get(segmento.id);
+    if (!state) return false;
+    return state.currentId === pregunta.id || state.answered.has(pregunta.id);
+  }
+
+  /** True if all reachable checklist questions in the segment have been answered (branch done). */
+  branchCompleto(segmento: Segmento): boolean {
+    const state = this.branchState.get(segmento.id);
+    return !!state && state.currentId === null && state.answered.size > 0;
+  }
+
+  /** The answered option text for a checklist pregunta, or null. */
+  getBranchAnswerLabel(segmento: Segmento, pregunta: Pregunta): string | null {
+    return this.branchState.get(segmento.id)?.answered.get(pregunta.id) ?? null;
+  }
+
+  /** Handle the evaluator selecting an option in a checklist (branch) question. */
+  onBranchAnswer(segmento: Segmento, pregunta: Pregunta, opcion: PreguntaOpcion): void {
+    const state = this.branchState.get(segmento.id);
+    if (!state) return;
+    state.answered.set(pregunta.id, opcion.texto);
+    this.setRespuestaValue(pregunta.id, opcion.texto);
+    // Advance to the next branch node (null = branch finished)
+    state.currentId = opcion.next_pregunta_id ?? null;
   }
 
   // ── Form helpers ────────────────────────────────────
@@ -312,11 +359,14 @@ export class EvaluacionNuevaComponent implements OnInit, OnDestroy {
       boleta_version_id: this.versionActiva.id,
       area_id:           meta.area_id ?? undefined,
       agente_nombre:     meta.agente_nombre,
-      respuestas:        this.respuestasArr.value.map((r: any) => ({
-        pregunta_id:     r.pregunta_id,
-        respuesta_valor: String(r.respuesta_valor),
-        comentario:      r.comentario || undefined,
-      })),
+      // Filter out checklist questions that were never reached in their branch (valor still null)
+      respuestas:        this.respuestasArr.value
+        .filter((r: any) => r.respuesta_valor !== null)
+        .map((r: any) => ({
+          pregunta_id:     r.pregunta_id,
+          respuesta_valor: String(r.respuesta_valor),
+          comentario:      r.comentario || undefined,
+        })),
     };
 
     this.isSaving = true;

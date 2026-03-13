@@ -165,6 +165,30 @@ mat-form-field { width: 100%; }
 .check-btn.parcial:not(.active):hover { border-color: #FDE68A; }
 .check-btn:disabled { opacity: .4; cursor: not-allowed; pointer-events: none; }
 
+/* Branch (checklist decision-tree) styles */
+.check-btn.branch-opt { border-color: #C7D2FE; color: #3730A3; }
+.check-btn.branch-opt:hover { background: #EEF2FF; border-color: #6366F1; color: #3730A3; }
+.check-btn.branch-opt mat-icon { color: #6366F1; }
+.opc-pts-tag {
+  display: inline-flex; margin-left: 4px;
+  font-size: 10px; font-weight: 700; color: #047857;
+  background: #D1FAE5; border-radius: 4px; padding: 1px 5px;
+}
+.branch-answered {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; background: #EEF2FF;
+  border: 1.5px solid #C7D2FE; border-radius: 20px;
+  font-size: 13px; font-weight: 600; color: #3730A3;
+}
+.branch-check { font-size: 15px; width: 15px; height: 15px; color: #6366F1; }
+.branch-done-banner {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px; margin-top: 6px;
+  background: #F0FDF4; border: 1px solid #BBF7D0;
+  border-radius: 8px; font-size: 12px; font-weight: 600; color: #166534;
+}
+.branch-done-banner mat-icon { font-size: 16px; width: 16px; height: 16px; color: #16A34A; }
+
 /* Multi-select hint */
 .multi-sel-hint {
   font-size: 12px; color: #4F46E5; font-style: italic;
